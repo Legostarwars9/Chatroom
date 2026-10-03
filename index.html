@@ -18,29 +18,6 @@ button:hover {background:#3a3f4a; cursor:pointer;}
 .username {color:#7aa2f7; font-weight:bold;}
 .msgid {color:#555; font-size:10px; margin-left:5px; cursor:help;}
 .deleteBtn {color:#f55; background:none; border:none; cursor:pointer; margin-left:5px;}
-/* ===== BRIGHT BLUE BACK BUTTON ===== */
-#back-button {
-    margin: 10px 0;
-    padding: 8px 14px;
-    font-size: 14px;
-    border-radius: 6px;
-    border: none;
-    background-color: #00aaff;   /* bright blue */
-    color: #fff;                 /* white text */
-    font-weight: bold;
-    box-shadow: 0 4px #0088cc;   /* subtle shadow for depth */
-}
-
-#back-button:hover {
-    background-color: #0099dd;   /* slightly darker blue on hover */
-    cursor: pointer;
-}
-
-#back-button:active {
-    background-color: #0088cc;   /* darker on click */
-    box-shadow: 0 2px #006699;
-    transform: translateY(2px);
-}
 
 #statusPopup {
     position: fixed;
@@ -60,12 +37,7 @@ button:hover {background:#3a3f4a; cursor:pointer;}
     white-space: pre-wrap;
     z-index: 1000;
 }
-
-#statusPopup.show {
-    opacity: 1;
-    transform: translateY(0);
-}
-
+#statusPopup.show { opacity: 1; transform: translateY(0); }
 </style>
 </head>
 <body>
@@ -77,9 +49,9 @@ button:hover {background:#3a3f4a; cursor:pointer;}
 <div id="login">
     <input id="username" placeholder="Username">
     <input id="password" type="password" placeholder="Password">
-    <button id="loginBtn">Login</button>
-    <button id="registerBtn">Create Account</button>
-    <div id="error"></div>
+    <button id="loginBtn" onclick="login()">Login</button>
+    <button id="registerBtn" onclick="register()">Create Account</button>
+    <div id="error" style="color:#ff5555; margin-top:5px;"></div>
 </div>
 
 <div id="chat" style="display:none;">
@@ -98,8 +70,8 @@ button:hover {background:#3a3f4a; cursor:pointer;}
     </div>
     <div id="chatBox"></div>
     <input id="message" style="width:70%" placeholder="Message or command" maxlength="1000">
-    <button id="sendBtn">Send</button>
-    <button id="logoutBtn">Logout</button>
+    <button id="sendBtn" onclick="send()">Send</button>
+    <button id="logoutBtn" onclick="logout()">Logout</button>
 </div>
 </div>
 
@@ -110,8 +82,12 @@ button:hover {background:#3a3f4a; cursor:pointer;}
 </div>
 
 <script>
-let user="", room="public", lastLen=0;
+// Pointing directly to your Python API Server
+const API_URL = "https://legostarwars9.com"; 
+
+let user="", room="public";
 let isAdmin=false;
+let pollInterval = null;
 
 const usernameInput=document.getElementById("username");
 const passwordInput=document.getElementById("password");
@@ -122,179 +98,190 @@ const chatBox=document.getElementById("chatBox");
 const messageInput=document.getElementById("message");
 const userList=document.getElementById("userList");
 const roomLabel=document.getElementById("roomLabel");
-const loginBtn=document.getElementById("loginBtn");
-const registerBtn=document.getElementById("registerBtn");
-const sendBtn=document.getElementById("sendBtn");
-const logoutBtn=document.getElementById("logoutBtn");
 const showIDsCheckbox=document.getElementById("showIDs");
 const showIDsLabel=document.getElementById("showIDsLabel");
 const showDeleteCheckbox=document.getElementById("showDelete");
 const showDeleteLabel=document.getElementById("showDeleteLabel");
+const statusPopup = document.getElementById("statusPopup");
 
-// ---------------- Login / Logout ----------------
+// Helper configuration to allow Cross-Origin Cookies
+const fetchOptions = (method, body = null) => {
+    const opts = {
+        method: method,
+        credentials: "include", // Crucial for cross-origin Flask cookies
+        headers: { "Content-Type": "application/json" }
+    };
+    if (body) opts.body = JSON.stringify(body);
+    return opts;
+};
+
+function showStatus(msg) {
+    statusPopup.textContent = typeof msg === 'object' ? JSON.stringify(msg) : msg;
+    statusPopup.classList.add("show");
+    setTimeout(() => statusPopup.classList.remove("show"), 3000);
+}
+
+// Check if user is already logged in on boot
+window.onload = function() {
+    fetch(`${API_URL}/whoami`, fetchOptions("GET"))
+    .then(r => r.json()).then(d => {
+        if(d.user) {
+            user = d.user;
+            showChat();
+        }
+    }).catch(err => console.log("Not logged in."));
+};
+
+// ---------------- Login / Logout / Register ----------------
 function login(){
     user=usernameInput.value.trim();
     const pass=passwordInput.value.trim();
     if(!user||!pass){ errorDiv.textContent="Enter username and password"; return; }
     
-    fetch("/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:user,password:pass})})
-    .then(r=>r.json()).then(d=>{
-        showStatus(d);
-        if(d.status==="ok"){ showChat(); start(); checkAdmin(); } else errorDiv.textContent="Login failed";
-    });
+    fetch(`${API_URL}/login`, fetchOptions("POST", {username:user, password:pass}))
+    .then(r => {
+        if(!r.ok) throw new Error("Login rejected");
+        return r.json();
+    })
+    .then(d=>{
+        if(d.status==="ok"){ 
+            showChat(); 
+        } else {
+            errorDiv.textContent="Login failed: " + d.status;
+        }
+    }).catch(() => { errorDiv.textContent="Login failed. Check your credentials."; });
 }
 
-function logout(){ fetch("/logout").then(()=>location.reload()); }
-function showChat(){ loginDiv.style.display="none"; chatDiv.style.display="block"; logoutBtn.style.display="inline"; }
-
-// ---------------- Register ----------------
 function register(){
     const u=usernameInput.value.trim();
     const p=passwordInput.value.trim();
     if(!u||!p){ errorDiv.textContent="Enter username/password"; return; }
-    fetch("/register",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:u,password:p})})
-    .then(r=>{ errorDiv.textContent = r.ok?"Account created":"Username exists"; });
+    
+    fetch(`${API_URL}/register`, fetchOptions("POST", {username:u, password:p}))
+    .then(r => {
+        if(r.status === 409) errorDiv.textContent = "Username exists";
+        else if(r.status === 410) errorDiv.textContent = "Invalid characters";
+        else if(r.ok) errorDiv.textContent = "Account created!";
+        else errorDiv.textContent = "Registration failed";
+    });
 }
 
-// ---------------- Chat ----------------
-function renderMessages(d){
-    chatBox.innerHTML = d.map(m=>{
+function logout(){ 
+    fetch(`${API_URL}/logout`, fetchOptions("GET")).then(()=>location.reload()); 
+}
+
+function showChat(){ 
+    loginDiv.style.display="none"; 
+    chatDiv.style.display="block";
+    checkAdmin();
+    startPolling();
+}
+
+function checkAdmin() {
+    fetch(`${API_URL}/command`, fetchOptions("POST", {cmd: "/checkrole"}))
+    .then(r => r.json()).then(d => {
+        if(d.role === "admin") {
+            isAdmin = true;
+            showIDsLabel.style.display = "inline";
+            showDeleteLabel.style.display = "inline";
+        }
+    });
+}
+
+// ---------------- Chat Engine ----------------
+function startPolling() {
+    loadMessagesAndUsers();
+    if(pollInterval) clearInterval(pollInterval);
+    pollInterval = setInterval(loadMessagesAndUsers, 2000); // Polls backend every 2 seconds
+}
+
+function loadMessagesAndUsers(){
+    // Fetch Messages
+    fetch(`${API_URL}/messages?room=${room}`, fetchOptions("GET"))
+    .then(r=>r.json()).then(d=>{
+        const isAtBottom = chatBox.scrollTop + chatBox.clientHeight >= chatBox.scrollHeight - 5;
+        renderMessages(d);
+        if(isAtBottom) chatBox.scrollTop = chatBox.scrollHeight;
+    });
+
+    // Fetch Active Users List
+    fetch(`${API_URL}/users`, fetchOptions("GET"))
+    .then(r=>r.json()).then(users=>{
+        userList.innerHTML = users.map(u => `<div class="user">${u}</div>`).join("");
+    });
+}
+
+function renderMessages(data){
+    chatBox.innerHTML = data.map(m=>{
         let parts = m.text.split("|");
         if(parts.length<2) return "";
         let ts = parts[0];
         let rest = parts[1];
         let uname = rest.split(":")[0];
         let msg = rest.split(":").slice(1).join(":").trim();
+        
         let html = `<div class="message"><span class="timestamp">${ts}</span> <span class="username">${uname}:</span> ${msg}`;
         if(isAdmin){
-            if(showIDsCheckbox.checked) html += ` <span class="msgid">${m.id}</span>`;
+            if(showIDsCheckbox.checked) html += ` <span class="msgid">[ID: ${m.id}]</span>`;
             if(showDeleteCheckbox.checked) html += ` <button class="deleteBtn" onclick="deleteMsg('${m.id}')">X</button>`;
         }
         html += `</div>`;
         return html;
     }).join("");
-}
-
-function load(){
-    fetch(`/messages?room=${room}`)
-        .then(r=>r.json())
-        .then(d=>{
-            // Save scroll info
-            const isAtBottom = chatBox.scrollTop + chatBox.clientHeight >= chatBox.scrollHeight - 5;
-            const oldScrollTop = chatBox.scrollTop;
-
-            renderMessages(d);
-
-            // Restore scroll
-            if(isAtBottom){
-                chatBox.scrollTop = chatBox.scrollHeight;
-            } else {
-                chatBox.scrollTop = oldScrollTop;
-            }
-
-            roomLabel.textContent = room==="public"?"":"Room "+room;
-        });
+    roomLabel.textContent = room==="public"?"":"Room "+room;
 }
 
 function send(){ 
     const msg = messageInput.value.trim(); 
     if(!msg) return; 
+    messageInput.value = "";
 
-    fetch(msg.startsWith("/") ? "/command" : "/send", {
-        method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({message: msg, cmd: msg, room: room})
-    })
+    const endpoint = msg.startsWith("/") ? "/command" : "/send";
+    const payload = msg.startsWith("/") ? {cmd: msg} : {message: msg, room: room};
+
+    fetch(`${API_URL}${endpoint}`, fetchOptions("POST", payload))
     .then(r => {
-        if(msg.startsWith("/")){
-            if(r.status === 403){ showStatus("Admin only."); return; }
-            if(r.status === 404){ showStatus("User not found."); return; }
-            if(r.status === 400){ showStatus("Command missing target or invalid."); return; }
-            return r.json().then(res => showStatus(res));
+        if (msg.startsWith("/")) {
+            if(r.status === 403) { showStatus("Admin only."); return; }
+            if(r.status === 404) { showStatus("User not found."); return; }
+            return r.json().then(res => showStatus(res.message || res.status));
         }
         return r.json().then(res => {
-            showStatus(res);
-            if(res.status === "muted") {
-                errorDiv.textContent = "You are muted. You cannot send messages.";
-            } else if(res.status === "banned" || res.status === "ip_banned") {
-                errorDiv.textContent = "You are banned. Access denied.";
-            } else if(res.status === "rate") {
-                errorDiv.textContent = "Rate limit exceeded. Please wait a few seconds.";
-            } else if(res.status === "ok") {
-                errorDiv.textContent = "";
-            }
+            if(res.status !== "ok") errorDiv.textContent = "Status: " + res.status;
         });
     });
+}
+messageInput.onkeydown = (e) => { if(e.key === "Enter") send(); };
 
-    messageInput.value = ""; 
+function deleteMsg(mid) {
+    fetch(`${API_URL}/command`, fetchOptions("POST", {cmd: `/delete ${mid}`}))
+    .then(() => loadMessagesAndUsers());
 }
 
-function deleteMsg(id){
-    fetch("/command",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({cmd:"/delete "+id})})
-    .then(r=>{
-        if(r.ok){
-            load();
-            return r.json().then(res=>showStatus(res));
-        }
-        if(r.status === 403){ showStatus("Admin only."); return; }
-        if(r.status === 404){ showStatus("User not found."); return; }
-        if(r.status === 400){ showStatus("Delete failed: missing message id."); return; }
-    });
-}
-function loadUsers(){ fetch("/users").then(r=>r.json()).then(d=>userList.innerHTML=d.map(u=>`<div class="user">${u}</div>`).join("")); }
-function switchRoom(r){ room=r; lastLen=0; load(); }
-function newRoom(){ fetch("/room/new").then(r=>r.text()).then(switchRoom); }
-
-// ---------------- Event Listeners ----------------
-loginBtn.onclick=login;
-registerBtn.onclick=register;
-sendBtn.onclick=send;
-logoutBtn.onclick=logout;
-messageInput.addEventListener("keydown",e=>{if(e.key==="Enter"){send();e.preventDefault();}});
-showIDsCheckbox.addEventListener("change",()=>load());
-showDeleteCheckbox.addEventListener("change",()=>load());
-
-// ---------------- Auto-login ----------------
-fetch("/whoami").then(r=>r.json()).then(d=>{ if(d.user){ user=d.user; showChat(); start(); checkAdmin(); } });
-
-// ---------------- Admin check ----------------
-function checkAdmin(){
-    fetch("/command",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({cmd:"/checkrole"})})
-    .then(r=>r.json()).then(res=>{
-        if(res.role==="admin"){ isAdmin=true; showIDsLabel.style.display="inline"; showDeleteLabel.style.display="inline"; }
-        else{ isAdmin=false; showIDsLabel.style.display="none"; showDeleteLabel.style.display="none"; }
-    });
-}
-//--Join Room--
-function joinRoom() {
-    const code = document.getElementById("roomCode").value.trim();
-    if(!code) return;
-
-    fetch("/room/join", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({room: code})
-    })
+// ---------------- Rooms ----------------
+function switchRoom(newRoom) {
+    fetch(`${API_URL}/room/join`, fetchOptions("POST", {room: newRoom}))
     .then(r => {
         if(r.ok) {
-            room = code;
-            lastLen = 0;
-            load();
+            room = newRoom;
+            loadMessagesAndUsers();
         } else {
-            alert("Room does not exist or you are banned.");
+            showStatus("Failed to join room.");
         }
     });
 }
-function showStatus(msg){
-    const popup = document.getElementById("statusPopup");
-    const message = typeof msg === "string" ? msg : JSON.stringify(msg);
-    popup.textContent = message;
-    popup.classList.add("show");
-    setTimeout(()=>popup.classList.remove("show"), 4000);
+
+function joinRoom() {
+    const code = document.getElementById("roomCode").value.trim();
+    if(code) switchRoom(code);
 }
 
-// ---------------- Start fetching ----------------
-function start(){ load(); setInterval(load,1000); setInterval(loadUsers,3000); setInterval(()=>fetch("/ping",{method:"POST"}),5000); }
+function newRoom() {
+    fetch(`${API_URL}/room/new`, fetchOptions("GET"))
+    .then(r => r.text()).then(roomCode => {
+        switchRoom(roomCode);
+    });
+}
 </script>
 </body>
 </html>
