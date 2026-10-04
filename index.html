@@ -18,32 +18,19 @@ button:hover {background:#3a3f4a; cursor:pointer;}
 .username {color:#7aa2f7; font-weight:bold;}
 .msgid {color:#555; font-size:10px; margin-left:5px; cursor:help;}
 .deleteBtn {color:#f55; background:none; border:none; cursor:pointer; margin-left:5px;}
-
-#statusPopup {
-    position: fixed;
-    right: 16px;
-    bottom: 16px;
-    max-width: 300px;
-    padding: 8px 10px;
-    background: #2a2f3a;
-    color: #e6e6e6;
-    border: 1px solid #3a3f4a;
-    border-radius: 6px;
-    font-size: 12px;
-    opacity: 0;
-    transform: translateY(6px);
-    transition: opacity 0.2s ease, transform 0.2s ease;
-    pointer-events: none;
-    white-space: pre-wrap;
-    z-index: 1000;
-}
-#statusPopup.show { opacity: 1; transform: translateY(0); }
+#statusPopup {position:fixed; right:16px; bottom:16px; max-width:300px; padding:8px 10px; background:#2a2f3a; color:#e6e6e6; border:1px solid #3a3f4a; border-radius:6px; font-size:12px; opacity:0; transform:translateY(6px); transition:opacity 0.2s ease, transform 0.2s ease; pointer-events:none; white-space:pre-wrap; z-index:1000;}
+#statusPopup.show {opacity:1; transform:translateY(0);}
 </style>
 </head>
+
 <body>
+
 <div id="statusPopup" role="status" aria-live="polite"></div>
+
 <div id="container">
+
 <div id="chatArea">
+
 <h2>Website Chat</h2>
 
 <div id="login">
@@ -55,57 +42,80 @@ button:hover {background:#3a3f4a; cursor:pointer;}
 </div>
 
 <div id="chat" style="display:none;">
+
     <div>
         <button onclick="switchRoom('public')">Public</button>
         <button onclick="newRoom()">New Room</button>
+
         <input id="roomCode" placeholder="Enter Room Code" style="width:120px; margin-left:5px;">
+
         <button onclick="joinRoom()">Join</button>
+
         <span id="roomLabel"></span>
+
         <label id="showIDsLabel" style="margin-left:10px; display:none;">
-            <input type="checkbox" id="showIDs"> Show Message IDs
+            <input type="checkbox" id="showIDs">
+            Show Message IDs
         </label>
+
         <label id="showDeleteLabel" style="margin-left:10px; display:none;">
-            <input type="checkbox" id="showDelete"> Show Quick Delete Buttons
+            <input type="checkbox" id="showDelete">
+            Show Quick Delete Buttons
         </label>
     </div>
+
     <div id="chatBox"></div>
+
     <input id="message" style="width:70%" placeholder="Message or command" maxlength="1000">
+
     <button id="sendBtn" onclick="send()">Send</button>
     <button id="logoutBtn" onclick="logout()">Logout</button>
+
 </div>
+
 </div>
 
 <div id="sidebar">
     <b>Online Users</b>
     <div id="userList"></div>
 </div>
+
 </div>
 
 <script>
-// Pointing directly to your Python API Server
-const API_URL = "https://chat.legostarwars9.com"; 
 
-let user="", room="public";
-let isAdmin=false;
-let pollInterval = null;
+const API_URL = "https://chat.legostarwars9.com";
 
-const usernameInput=document.getElementById("username");
-const passwordInput=document.getElementById("password");
-const loginDiv=document.getElementById("login");
-const chatDiv=document.getElementById("chat");
-const errorDiv=document.getElementById("error");
-const chatBox=document.getElementById("chatBox");
-const messageInput=document.getElementById("message");
-const userList=document.getElementById("userList");
-const roomLabel=document.getElementById("roomLabel");
-const showIDsCheckbox=document.getElementById("showIDs");
-const showIDsLabel=document.getElementById("showIDsLabel");
-const showDeleteCheckbox=document.getElementById("showDelete");
-const showDeleteLabel=document.getElementById("showDeleteLabel");
+const WS_URL =
+    API_URL.replace(/^https:/, "wss:")
+           .replace(/^http:/, "ws:")
+    + "/ws";
+
+let user = "";
+let room = "public";
+let isAdmin = false;
+
+let socket = null;
+let wsPingInterval = null;
+let reconnectTimeout = null;
+
+const usernameInput = document.getElementById("username");
+const passwordInput = document.getElementById("password");
+const loginDiv = document.getElementById("login");
+const chatDiv = document.getElementById("chat");
+const errorDiv = document.getElementById("error");
+const chatBox = document.getElementById("chatBox");
+const messageInput = document.getElementById("message");
+const userList = document.getElementById("userList");
+const roomLabel = document.getElementById("roomLabel");
+const showIDsCheckbox = document.getElementById("showIDs");
+const showIDsLabel = document.getElementById("showIDsLabel");
+const showDeleteCheckbox = document.getElementById("showDelete");
+const showDeleteLabel = document.getElementById("showDeleteLabel");
 const statusPopup = document.getElementById("statusPopup");
 
-// Helper configuration to allow Cross-Origin Cookies
 const fetchOptions = (method, body = null) => {
+
     const opts = {
         method: method,
         credentials: "include"
@@ -115,6 +125,7 @@ const fetchOptions = (method, body = null) => {
         opts.headers = {
             "Content-Type": "application/json"
         };
+
         opts.body = JSON.stringify(body);
     }
 
@@ -122,172 +133,693 @@ const fetchOptions = (method, body = null) => {
 };
 
 function showStatus(msg) {
-    statusPopup.textContent = typeof msg === 'object' ? JSON.stringify(msg) : msg;
+
+    statusPopup.textContent =
+        typeof msg === "object"
+            ? JSON.stringify(msg)
+            : msg;
+
     statusPopup.classList.add("show");
-    setTimeout(() => statusPopup.classList.remove("show"), 3000);
+
+    setTimeout(() => {
+        statusPopup.classList.remove("show");
+    }, 3000);
 }
 
-// Check if user is already logged in on boot
 window.onload = function() {
+
     fetch(`${API_URL}/whoami`, fetchOptions("GET"))
-    .then(r => r.json()).then(d => {
-        if(d.user) {
+    .then(r => r.json())
+    .then(d => {
+
+        if (d.user) {
             user = d.user;
             showChat();
         }
-    }).catch(err => console.log("Not logged in."));
+
+    })
+    .catch(() => {
+        console.log("Not logged in.");
+    });
 };
 
-// ---------------- Login / Logout / Register ----------------
-function login(){
-    user=usernameInput.value.trim();
-    const pass=passwordInput.value.trim();
-    if(!user||!pass){ errorDiv.textContent="Enter username and password"; return; }
-    
-    fetch(`${API_URL}/login`, fetchOptions("POST", {username:user, password:pass}))
+function login() {
+
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value.trim();
+
+    if (!username || !password) {
+        errorDiv.textContent = "Enter username and password";
+        return;
+    }
+
+    fetch(
+        `${API_URL}/login`,
+        fetchOptions(
+            "POST",
+            {
+                username: username,
+                password: password
+            }
+        )
+    )
     .then(r => {
-        if(!r.ok) throw new Error("Login rejected");
+
+        if (!r.ok) {
+            throw new Error("Login rejected");
+        }
+
         return r.json();
     })
-    .then(d=>{
-        if(d.status==="ok"){ 
-            showChat(); 
-        } else {
-            errorDiv.textContent="Login failed: " + d.status;
-        }
-    }).catch(() => { errorDiv.textContent="Login failed. Check your credentials."; });
-}
+    .then(d => {
 
-function register(){
-    const u=usernameInput.value.trim();
-    const p=passwordInput.value.trim();
-    if(!u||!p){ errorDiv.textContent="Enter username/password"; return; }
-    
-    fetch(`${API_URL}/register`, fetchOptions("POST", {username:u, password:p}))
-    .then(r => {
-        if(r.status === 409) errorDiv.textContent = "Username exists";
-        else if(r.status === 410) errorDiv.textContent = "Invalid characters";
-        else if(r.ok) errorDiv.textContent = "Account created!";
-        else errorDiv.textContent = "Registration failed";
+        if (d.status === "ok") {
+            user = d.user || username;
+            showChat();
+        } else {
+            errorDiv.textContent =
+                "Login failed: " + d.status;
+        }
+
+    })
+    .catch(() => {
+        errorDiv.textContent =
+            "Login failed. Check your credentials.";
     });
 }
 
-function logout(){ 
-    fetch(`${API_URL}/logout`, fetchOptions("GET")).then(()=>location.reload()); 
+function register() {
+
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value.trim();
+
+    if (!username || !password) {
+        errorDiv.textContent =
+            "Enter username/password";
+        return;
+    }
+
+    fetch(
+        `${API_URL}/register`,
+        fetchOptions(
+            "POST",
+            {
+                username: username,
+                password: password
+            }
+        )
+    )
+    .then(r => {
+
+        if (r.status === 409) {
+            errorDiv.textContent = "Username exists";
+        } else if (r.status === 410) {
+            errorDiv.textContent = "Invalid characters";
+        } else if (r.ok) {
+            errorDiv.textContent = "Account created!";
+        } else {
+            errorDiv.textContent = "Registration failed";
+        }
+
+    });
 }
 
-function showChat(){ 
-    loginDiv.style.display="none"; 
-    chatDiv.style.display="block";
+function logout() {
+
+    stopWebSocket();
+
+    fetch(`${API_URL}/logout`, fetchOptions("GET"))
+    .then(() => {
+        location.reload();
+    });
+}
+
+function showChat() {
+
+    loginDiv.style.display = "none";
+    chatDiv.style.display = "block";
+
     checkAdmin();
-    startPolling();
+    connectWebSocket();
 }
 
 function checkAdmin() {
-    fetch(`${API_URL}/command`, fetchOptions("POST", {cmd: "/checkrole"}))
-    .then(r => r.json()).then(d => {
-        if(d.role === "admin") {
+
+    fetch(
+        `${API_URL}/command`,
+        fetchOptions(
+            "POST",
+            {
+                cmd: "/checkrole"
+            }
+        )
+    )
+    .then(r => r.json())
+    .then(d => {
+
+        if (d.role === "admin") {
+
             isAdmin = true;
+
             showIDsLabel.style.display = "inline";
             showDeleteLabel.style.display = "inline";
         }
+
     });
 }
 
-// ---------------- Chat Engine ----------------
-function startPolling() {
-    loadMessagesAndUsers();
-    if(pollInterval) clearInterval(pollInterval);
-    pollInterval = setInterval(loadMessagesAndUsers, 2000); // Polls backend every 2 seconds
-}
+function connectWebSocket() {
 
-function loadMessagesAndUsers(){
-    // Fetch Messages
-    fetch(`${API_URL}/messages?room=${room}`, fetchOptions("GET"))
-    .then(r=>r.json()).then(d=>{
-        const isAtBottom = chatBox.scrollTop + chatBox.clientHeight >= chatBox.scrollHeight - 5;
-        renderMessages(d);
-        if(isAtBottom) chatBox.scrollTop = chatBox.scrollHeight;
-    });
+    if (
+        socket &&
+        (
+            socket.readyState === WebSocket.OPEN ||
+            socket.readyState === WebSocket.CONNECTING
+        )
+    ) {
+        return;
+    }
 
-    // Fetch Active Users List
-    fetch(`${API_URL}/users`, fetchOptions("GET"))
-    .then(r=>r.json()).then(users=>{
-        userList.innerHTML = users.map(u => `<div class="user">${u}</div>`).join("");
-    });
-}
+    console.log("Connecting WebSocket:", WS_URL);
 
-function renderMessages(data){
-    chatBox.innerHTML = data.map(m=>{
-        let parts = m.text.split("|");
-        if(parts.length<2) return "";
-        let ts = parts[0];
-        let rest = parts[1];
-        let uname = rest.split(":")[0];
-        let msg = rest.split(":").slice(1).join(":").trim();
-        
-        let html = `<div class="message"><span class="timestamp">${ts}</span> <span class="username">${uname}:</span> ${msg}`;
-        if(isAdmin){
-            if(showIDsCheckbox.checked) html += ` <span class="msgid">[ID: ${m.id}]</span>`;
-            if(showDeleteCheckbox.checked) html += ` <button class="deleteBtn" onclick="deleteMsg('${m.id}')">X</button>`;
+    socket = new WebSocket(WS_URL);
+
+    socket.onopen = function() {
+
+        console.log("WebSocket connected");
+
+        showStatus("Connected to chat");
+
+        startWebSocketPing();
+    };
+
+    socket.onmessage = function(event) {
+
+        try {
+
+            const data = JSON.parse(event.data);
+
+            handleWebSocketMessage(data);
+
+        } catch (err) {
+
+            console.error(
+                "Invalid WebSocket data:",
+                event.data,
+                err
+            );
         }
-        html += `</div>`;
-        return html;
-    }).join("");
-    roomLabel.textContent = room==="public"?"":"Room "+room;
+    };
+
+    socket.onerror = function(error) {
+
+        console.error(
+            "WebSocket error:",
+            error
+        );
+    };
+
+    socket.onclose = function(event) {
+
+        console.log(
+            "WebSocket closed:",
+            event.code,
+            event.reason
+        );
+
+        stopWebSocketPing();
+
+        socket = null;
+
+        if (chatDiv.style.display === "none") {
+            return;
+        }
+
+        showStatus(
+            "Chat connection lost. Reconnecting..."
+        );
+
+        clearTimeout(reconnectTimeout);
+
+        reconnectTimeout = setTimeout(() => {
+
+            if (chatDiv.style.display !== "none") {
+                connectWebSocket();
+            }
+
+        }, 3000);
+    };
 }
 
-function send(){ 
-    const msg = messageInput.value.trim(); 
-    if(!msg) return; 
+function stopWebSocket() {
+
+    clearTimeout(reconnectTimeout);
+
+    reconnectTimeout = null;
+
+    stopWebSocketPing();
+
+    if (socket) {
+
+        socket.onclose = null;
+        socket.close();
+        socket = null;
+    }
+}
+
+function startWebSocketPing() {
+
+    stopWebSocketPing();
+
+    wsPingInterval = setInterval(() => {
+
+        if (
+            socket &&
+            socket.readyState === WebSocket.OPEN
+        ) {
+
+            socket.send(
+                JSON.stringify({
+                    type: "ping"
+                })
+            );
+        }
+
+    }, 10000);
+}
+
+function stopWebSocketPing() {
+
+    if (wsPingInterval) {
+
+        clearInterval(wsPingInterval);
+        wsPingInterval = null;
+    }
+}
+
+function handleWebSocketMessage(data) {
+
+    if (data.type === "connected") {
+
+        user = data.user || user;
+        room = data.room || "public";
+
+        renderMessages(data.messages || []);
+        renderUsers(data.users || []);
+
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        return;
+    }
+
+    if (data.type === "message") {
+
+        const wasAtBottom =
+            chatBox.scrollTop +
+            chatBox.clientHeight >=
+            chatBox.scrollHeight - 5;
+
+        appendMessage(data.message);
+
+        if (wasAtBottom) {
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        return;
+    }
+
+    if (data.type === "users") {
+
+        renderUsers(data.users || []);
+
+        return;
+    }
+
+    if (data.type === "room") {
+
+        room = data.room || "public";
+
+        renderMessages(data.messages || []);
+
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        return;
+    }
+
+    if (data.type === "refresh") {
+
+        requestRoomRefresh();
+
+        return;
+    }
+
+    if (data.type === "error") {
+
+        showStatus(
+            data.message || "WebSocket error"
+        );
+
+        return;
+    }
+
+    if (data.type === "pong") {
+        return;
+    }
+}
+
+function renderUsers(users) {
+
+    userList.innerHTML = users
+        .map(
+            u => `<div class="user">${escapeHTML(u)}</div>`
+        )
+        .join("");
+}
+
+function renderMessages(data) {
+
+    chatBox.innerHTML = "";
+
+    data.forEach(m => {
+        appendMessage(m);
+    });
+
+    roomLabel.textContent =
+        room === "public"
+            ? ""
+            : "Room " + room;
+}
+
+function appendMessage(m) {
+
+    if (!m || !m.text) {
+        return;
+    }
+
+    const parts = m.text.split("|");
+
+    if (parts.length < 2) {
+        return;
+    }
+
+    const timestamp = parts[0];
+    const rest = parts[1];
+
+    const username = rest.split(":")[0];
+
+    const message =
+        rest
+            .split(":")
+            .slice(1)
+            .join(":")
+            .trim();
+
+    const messageDiv =
+        document.createElement("div");
+
+    messageDiv.className = "message";
+
+    const timestampSpan =
+        document.createElement("span");
+
+    timestampSpan.className = "timestamp";
+    timestampSpan.textContent = timestamp;
+
+    const usernameSpan =
+        document.createElement("span");
+
+    usernameSpan.className = "username";
+    usernameSpan.textContent = username + ":";
+
+    messageDiv.appendChild(timestampSpan);
+    messageDiv.appendChild(
+        document.createTextNode(" ")
+    );
+    messageDiv.appendChild(usernameSpan);
+    messageDiv.appendChild(
+        document.createTextNode(" " + message)
+    );
+
+    if (isAdmin) {
+
+        if (showIDsCheckbox.checked) {
+
+            const idSpan =
+                document.createElement("span");
+
+            idSpan.className = "msgid";
+            idSpan.textContent = `[ID: ${m.id}]`;
+            idSpan.title = "Message ID";
+
+            messageDiv.appendChild(
+                document.createTextNode(" ")
+            );
+
+            messageDiv.appendChild(idSpan);
+        }
+
+        if (showDeleteCheckbox.checked) {
+
+            const deleteButton =
+                document.createElement("button");
+
+            deleteButton.className = "deleteBtn";
+            deleteButton.textContent = "X";
+
+            deleteButton.onclick = function() {
+                deleteMsg(m.id);
+            };
+
+            messageDiv.appendChild(deleteButton);
+        }
+    }
+
+    chatBox.appendChild(messageDiv);
+}
+
+function escapeHTML(value) {
+
+    const div =
+        document.createElement("div");
+
+    div.textContent = value;
+
+    return div.innerHTML;
+}
+
+function send() {
+
+    const msg = messageInput.value.trim();
+
+    if (!msg) {
+        return;
+    }
+
     messageInput.value = "";
 
-    const endpoint = msg.startsWith("/") ? "/command" : "/send";
-    const payload = msg.startsWith("/") ? {cmd: msg} : {message: msg, room: room};
+    const endpoint =
+        msg.startsWith("/")
+            ? "/command"
+            : "/send";
 
-    fetch(`${API_URL}${endpoint}`, fetchOptions("POST", payload))
+    const payload =
+        msg.startsWith("/")
+            ? {cmd: msg}
+            : {
+                message: msg,
+                room: room
+            };
+
+    fetch(
+        `${API_URL}${endpoint}`,
+        fetchOptions(
+            "POST",
+            payload
+        )
+    )
     .then(r => {
+
         if (msg.startsWith("/")) {
-            if(r.status === 403) { showStatus("Admin only."); return; }
-            if(r.status === 404) { showStatus("User not found."); return; }
-            return r.json().then(res => showStatus(res.message || res.status));
+
+            if (r.status === 403) {
+                showStatus("Admin only.");
+                return;
+            }
+
+            if (r.status === 404) {
+                showStatus("User not found.");
+                return;
+            }
+
+            return r.json()
+                .then(res => {
+                    showStatus(
+                        res.message ||
+                        res.status
+                    );
+                });
         }
-        return r.json().then(res => {
-            if(res.status !== "ok") errorDiv.textContent = "Status: " + res.status;
-        });
+
+        return r.json()
+            .then(res => {
+
+                if (res.status !== "ok") {
+
+                    errorDiv.textContent =
+                        "Status: " +
+                        res.status;
+                }
+            });
+
+    })
+    .catch(err => {
+
+        console.error(
+            "Send failed:",
+            err
+        );
+
+        showStatus(
+            "Failed to send message."
+        );
     });
 }
-messageInput.onkeydown = (e) => { if(e.key === "Enter") send(); };
 
-function deleteMsg(mid) {
-    fetch(`${API_URL}/command`, fetchOptions("POST", {cmd: `/delete ${mid}`}))
-    .then(() => loadMessagesAndUsers());
-}
+messageInput.onkeydown = function(e) {
 
-// ---------------- Rooms ----------------
-function switchRoom(newRoom) {
-    fetch(`${API_URL}/room/join`, fetchOptions("POST", {room: newRoom}))
+    if (e.key === "Enter") {
+        send();
+    }
+};
+
+function deleteMsg(messageID) {
+
+    fetch(
+        `${API_URL}/command`,
+        fetchOptions(
+            "POST",
+            {
+                cmd: `/delete ${messageID}`
+            }
+        )
+    )
     .then(r => {
-        if(r.ok) {
-            room = newRoom;
-            loadMessagesAndUsers();
-        } else {
-            showStatus("Failed to join room.");
+
+        if (!r.ok) {
+
+            showStatus(
+                "Failed to delete message."
+            );
         }
+
+    })
+    .catch(err => {
+
+        console.error(
+            "Delete failed:",
+            err
+        );
+
+        showStatus(
+            "Failed to delete message."
+        );
     });
+}
+
+function requestRoomRefresh() {
+
+    if (
+        !socket ||
+        socket.readyState !== WebSocket.OPEN
+    ) {
+        return;
+    }
+
+    socket.send(
+        JSON.stringify({
+            type: "join",
+            room: room
+        })
+    );
+}
+
+function switchRoom(newRoom) {
+
+    if (!newRoom) {
+        return;
+    }
+
+    if (
+        !socket ||
+        socket.readyState !== WebSocket.OPEN
+    ) {
+
+        showStatus(
+            "Chat connection is not ready."
+        );
+
+        return;
+    }
+
+    socket.send(
+        JSON.stringify({
+            type: "join",
+            room: newRoom
+        })
+    );
 }
 
 function joinRoom() {
-    const code = document.getElementById("roomCode").value.trim();
-    if(code) switchRoom(code);
+
+    const code =
+        document
+            .getElementById("roomCode")
+            .value
+            .trim();
+
+    if (code) {
+        switchRoom(code);
+    }
 }
 
 function newRoom() {
-    fetch(`${API_URL}/room/new`, fetchOptions("GET"))
-    .then(r => r.text()).then(roomCode => {
+
+    fetch(
+        `${API_URL}/room/new`,
+        fetchOptions("GET")
+    )
+    .then(r => r.text())
+    .then(roomCode => {
         switchRoom(roomCode);
+    })
+    .catch(err => {
+
+        console.error(
+            "Could not create room:",
+            err
+        );
+
+        showStatus(
+            "Failed to create room."
+        );
     });
 }
+
+showIDsCheckbox.addEventListener(
+    "change",
+    () => {
+        requestRoomRefresh();
+    }
+);
+
+showDeleteCheckbox.addEventListener(
+    "change",
+    () => {
+        requestRoomRefresh();
+    }
+);
+
 </script>
+
 </body>
 </html>
