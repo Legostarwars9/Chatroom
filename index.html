@@ -32,7 +32,20 @@ button{
 button:hover{
     background:#444
 }
+#layoutButton{
+    position:fixed;
+    top:10px;
+    right:10px;
+    z-index:20
+}
 
+body.old-layout #layoutButton{
+    top:auto;
+    right:10px;
+    bottom:10px;
+    background:#2a2f3a;
+    border:1px solid #3a3f4a
+}
 .primary{
     background:#2463d4
 }
@@ -416,29 +429,29 @@ body.old-layout #adminControls{
 
 <div id="chatScreen">
 
-    <div id="topBar">
-        <span id="roomLabel">Room: public</span>
+<button
+    id="layoutButton"
+    onclick="toggleLayout()"
+>
+    Switch to New Layout
+</button>
 
-        <span id="connectionStatus">
-            Connecting...
-        </span>
+<div id="topBar">
+    <span id="roomLabel">Room: public</span>
 
-        <button
-            id="layoutButton"
-            onclick="toggleLayout()"
-        >
-            Switch to New Layout
-        </button>
+    <span id="connectionStatus">
+        Connecting...
+    </span>
 
-        <button
-            onclick="logout()"
-            class="danger"
-        >
-            Logout
-        </button>
-    </div>
+    <button
+        onclick="logout()"
+        class="danger"
+    >
+        Logout
+    </button>
+</div>
 
-    <div id="main">
+<div id="main">
 
         <div id="sidebar">
 
