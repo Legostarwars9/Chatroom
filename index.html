@@ -4,79 +4,562 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Chatroom</title>
+
 <style>
-*{box-sizing:border-box}body{margin:0;background:#111;color:#eee;font-family:Arial,sans-serif}button,input{font:inherit}button{cursor:pointer;padding:9px 14px;margin:4px 2px;border:0;border-radius:5px;background:#333;color:#fff}button:hover{background:#444}.primary{background:#2463d4}.primary:hover{background:#3174ed}.danger{background:#9b2525}.danger:hover{background:#bd3030}input{width:100%;padding:10px;margin:5px 0;border:1px solid #444;border-radius:5px;background:#111;color:#fff}#loginScreen,#registerScreen{width:350px;max-width:calc(100% - 30px);margin:80px auto;padding:25px;background:#1c1c1c;border-radius:10px}#loginScreen h1,#registerScreen h1{text-align:center;margin-top:0}#registerScreen{display:none}.login-toggle{text-align:center;margin-top:12px}#loginMessage,#registerMessage{min-height:20px;color:#f66;margin-top:8px}.layout-button{position:fixed;top:10px;right:10px;z-index:20}.message{margin:5px 0;padding:7px 10px;background:#181818;border-radius:5px;word-wrap:break-word}.message-id{color:#777;font-size:11px;margin-left:5px}.delete-button{margin-left:8px;padding:3px 7px;font-size:11px}#chatScreen{display:none;height:100vh;overflow:hidden}#topBar{height:55px;background:#1b1b1b;border-bottom:1px solid #333;display:flex;align-items:center;gap:8px;padding:8px 12px}#roomLabel{font-weight:bold;margin-right:auto}#connectionStatus{font-size:12px;color:#aaa}#main{display:flex;height:calc(100vh - 55px)}#sidebar{width:220px;min-width:180px;background:#171717;border-right:1px solid #333;padding:12px;overflow-y:auto}#sidebar h3{margin-top:5px}#onlineUsers{list-style:none;padding:0;margin:5px 0}#onlineUsers li{padding:4px}#chatArea{flex:1;display:flex;flex-direction:column;min-width:0}#messages{flex:1;overflow-y:auto;padding:12px}#inputArea{display:flex;gap:5px;padding:10px;background:#1b1b1b;border-top:1px solid #333}#messageInput{flex:1;margin:0}#roomControls{margin-bottom:15px}#adminControls{display:none;border-top:1px solid #333;margin-top:15px;padding-top:10px}#adminControls input{width:auto;margin-right:5px}.room-button{width:100%;text-align:left;margin:2px 0}.old-only{display:none}.old-layout{background:#1e2128}.old-layout #topBar{display:none}.old-layout #main{height:100vh}.old-layout #sidebar{order:2;width:180px;min-width:180px;background:#14161c;border-left:1px solid #3a3f4a;border-right:0;padding:10px}.old-layout #chatArea{order:1;padding:15px}.old-layout #chatArea:before{content:"Website Chat";display:block;color:#7aa2f7;font-size:1.5em;font-weight:bold;margin:0 0 15px}.old-layout #messages{height:65vh;flex:none;background:#111;border:1px solid #3a3f4a;overflow-y:auto;padding:6px;white-space:pre-wrap}.old-layout #inputArea{display:block;background:transparent;border:0;padding:0;margin-top:4px}.old-layout #messageInput{display:inline-block;width:70%;background:#2a2f3a;border:1px solid #3a3f4a;border-radius:0;padding:5px}.old-layout #inputArea button{padding:5px;margin:2px}.old-layout #roomControls{margin-bottom:10px}.old-layout #roomControls h3{display:none}.old-layout #roomControls .room-button{width:auto;text-align:center}.old-layout #roomInput{width:120px;padding:5px;border-radius:0;background:#2a2f3a}.old-layout #roomControls button{padding:5px}.old-layout #adminControls{border:0;margin:0;padding:0}.old-layout .message{background:transparent;border-radius:0;margin-bottom:4px;padding:0}.old-layout .message-id{color:#555;font-size:10px}.old-layout #connectionStatus{position:absolute;right:10px;bottom:10px}.old-layout #sidebar:before{content:"Online Users";font-weight:bold;display:block;margin-bottom:8px}.old-layout #onlineUsers{margin-top:0}.old-layout .layout-button{background:#2a2f3a;border:1px solid #3a3f4a}body:not(.old-layout) .old-only{display:none}@media(max-width:700px){#sidebar{width:160px;min-width:160px}.old-layout #sidebar{width:180px;min-width:180px}}
+*{box-sizing:border-box}
+
+body{
+    margin:0;
+    background:#111;
+    color:#eee;
+    font-family:Arial,sans-serif
+}
+
+button,input{
+    font:inherit
+}
+
+button{
+    cursor:pointer;
+    padding:9px 14px;
+    margin:4px 2px;
+    border:0;
+    border-radius:5px;
+    background:#333;
+    color:#fff
+}
+
+button:hover{
+    background:#444
+}
+
+.primary{
+    background:#2463d4
+}
+
+.primary:hover{
+    background:#3174ed
+}
+
+.danger{
+    background:#9b2525
+}
+
+.danger:hover{
+    background:#bd3030
+}
+
+input{
+    width:100%;
+    padding:10px;
+    margin:5px 0;
+    border:1px solid #444;
+    border-radius:5px;
+    background:#111;
+    color:#fff
+}
+
+#loginScreen,
+#registerScreen{
+    width:350px;
+    max-width:calc(100% - 30px);
+    margin:80px auto;
+    padding:25px;
+    background:#1c1c1c;
+    border-radius:10px
+}
+
+#loginScreen h1,
+#registerScreen h1{
+    text-align:center;
+    margin-top:0
+}
+
+#registerScreen{
+    display:none
+}
+
+#loginMessage,
+#registerMessage{
+    min-height:20px;
+    color:#f66;
+    margin-top:8px
+}
+
+#chatScreen{
+    display:none;
+    height:100vh;
+    overflow:hidden
+}
+
+#topBar{
+    height:55px;
+    background:#1b1b1b;
+    border-bottom:1px solid #333;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 12px
+}
+
+#roomLabel{
+    font-weight:bold;
+    margin-right:auto
+}
+
+#connectionStatus{
+    font-size:12px;
+    color:#aaa
+}
+
+#main{
+    display:flex;
+    height:calc(100vh - 55px)
+}
+
+#sidebar{
+    width:220px;
+    min-width:180px;
+    background:#171717;
+    border-right:1px solid #333;
+    padding:12px;
+    overflow-y:auto
+}
+
+#sidebar h3{
+    margin-top:5px
+}
+
+#onlineUsers{
+    list-style:none;
+    padding:0;
+    margin:5px 0
+}
+
+#onlineUsers li{
+    padding:4px
+}
+
+#chatArea{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    min-width:0
+}
+
+#messages{
+    flex:1;
+    overflow-y:auto;
+    padding:12px
+}
+
+#inputArea{
+    display:flex;
+    gap:5px;
+    padding:10px;
+    background:#1b1b1b;
+    border-top:1px solid #333
+}
+
+#messageInput{
+    flex:1;
+    margin:0
+}
+
+#roomControls{
+    margin-bottom:15px
+}
+
+#adminControls{
+    display:none;
+    border-top:1px solid #333;
+    margin-top:15px;
+    padding-top:10px
+}
+
+#adminControls input{
+    width:auto;
+    margin-right:5px
+}
+
+.room-button{
+    width:100%;
+    text-align:left;
+    margin:2px 0
+}
+
+.message{
+    margin:5px 0;
+    padding:7px 10px;
+    background:#181818;
+    border-radius:5px;
+    word-wrap:break-word
+}
+
+.message-id{
+    color:#777;
+    font-size:11px;
+    margin-left:5px
+}
+
+.delete-button{
+    margin-left:8px;
+    padding:3px 7px;
+    font-size:11px
+}
+
+/* =========================
+   OLD LAYOUT
+   ========================= */
+
+body.old-layout{
+    background:#1e2128;
+    color:#e6e6e6
+}
+
+body.old-layout #topBar{
+    display:none
+}
+
+body.old-layout #main{
+    display:flex;
+    height:100vh
+}
+
+body.old-layout #chatArea{
+    order:1;
+    flex:1;
+    padding:15px;
+    display:flex;
+    flex-direction:column
+}
+
+body.old-layout #chatArea::before{
+    content:"Website Chat";
+    display:block;
+    color:#7aa2f7;
+    font-size:1.5em;
+    font-weight:bold;
+    margin:0 0 15px
+}
+
+body.old-layout #sidebar{
+    order:2;
+    width:180px;
+    min-width:180px;
+    background:#14161c;
+    border-left:1px solid #3a3f4a;
+    border-right:0;
+    padding:10px
+}
+
+body.old-layout #sidebar::before{
+    content:"Online Users";
+    display:block;
+    font-weight:bold;
+    margin-bottom:8px
+}
+
+body.old-layout #sidebar h3{
+    display:none
+}
+
+body.old-layout #roomControls{
+    margin-bottom:10px
+}
+
+body.old-layout #roomControls .room-button{
+    width:auto;
+    text-align:center
+}
+
+body.old-layout #roomInput{
+    width:120px;
+    padding:5px;
+    border-radius:0;
+    background:#2a2f3a;
+    border:1px solid #3a3f4a
+}
+
+body.old-layout #roomControls button{
+    padding:5px
+}
+
+body.old-layout #messages{
+    flex:none;
+    height:65vh;
+    background:#111;
+    border:1px solid #3a3f4a;
+    overflow-y:auto;
+    padding:6px;
+    white-space:pre-wrap
+}
+
+body.old-layout #inputArea{
+    display:block;
+    background:transparent;
+    border:0;
+    padding:0;
+    margin-top:4px
+}
+
+body.old-layout #messageInput{
+    display:inline-block;
+    width:70%;
+    background:#2a2f3a;
+    border:1px solid #3a3f4a;
+    border-radius:0;
+    padding:5px
+}
+
+body.old-layout #inputArea button{
+    padding:5px;
+    margin:2px
+}
+
+body.old-layout .message{
+    background:transparent;
+    border-radius:0;
+    margin-bottom:4px;
+    padding:0
+}
+
+body.old-layout .message-id{
+    color:#555;
+    font-size:10px
+}
+
+body.old-layout #connectionStatus{
+    position:fixed;
+    right:10px;
+    bottom:10px;
+    z-index:10
+}
+
+body.old-layout #layoutButton{
+    position:fixed;
+    right:10px;
+    bottom:10px;
+    z-index:20;
+    background:#2a2f3a;
+    color:#fff;
+    border:1px solid #3a3f4a
+}
+
+body.old-layout #adminControls{
+    border:0;
+    margin:0;
+    padding:0
+}
+
+@media(max-width:700px){
+    #sidebar{
+        width:160px;
+        min-width:160px
+    }
+
+    body.old-layout #sidebar{
+        width:180px;
+        min-width:180px
+    }
+}
 </style>
 </head>
+
 <body>
-<button class="layout-button" onclick="toggleLayout()">Switch Layout</button>
 
 <div id="loginScreen">
-<h1>Web Chat</h1>
-<input id="loginUsername" type="text" placeholder="Username" autocomplete="username">
-<input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password">
-<button class="primary" onclick="login()">Login</button>
-<button onclick="showRegister()">Register</button>
-<div id="loginMessage"></div>
+    <h1>Web Chat</h1>
+
+    <input
+        id="loginUsername"
+        type="text"
+        placeholder="Username"
+        autocomplete="username"
+    >
+
+    <input
+        id="loginPassword"
+        type="password"
+        placeholder="Password"
+        autocomplete="current-password"
+    >
+
+    <button class="primary" onclick="login()">Login</button>
+    <button onclick="showRegister()">Register</button>
+
+    <div id="loginMessage"></div>
 </div>
 
 <div id="registerScreen">
-<h1>Register</h1>
-<input id="registerUsername" type="text" placeholder="Username" autocomplete="username">
-<input id="registerPassword" type="password" placeholder="Password" autocomplete="new-password">
-<button class="primary" onclick="register()">Register</button>
-<button onclick="showLogin()">Back</button>
-<div id="registerMessage"></div>
+    <h1>Register</h1>
+
+    <input
+        id="registerUsername"
+        type="text"
+        placeholder="Username"
+        autocomplete="username"
+    >
+
+    <input
+        id="registerPassword"
+        type="password"
+        placeholder="Password"
+        autocomplete="new-password"
+    >
+
+    <button class="primary" onclick="register()">Register</button>
+    <button onclick="showLogin()">Back</button>
+
+    <div id="registerMessage"></div>
 </div>
 
 <div id="chatScreen">
-<div id="topBar">
-<span id="roomLabel">Room: public</span>
-<span id="connectionStatus">Connecting...</span>
-<button onclick="toggleLayout()">Switch Layout</button>
-<button onclick="logout()">Logout</button>
-</div>
 
-<div id="main">
-<div id="sidebar">
-<div id="roomControls">
-<h3>Rooms</h3>
-<button class="room-button" onclick="switchRoom('public')">Public</button>
-<input id="roomInput" type="text" placeholder="Room name">
-<button onclick="switchRoomFromInput()">Join Room</button>
-<button onclick="newRoom()">New Room</button>
-</div>
+    <div id="topBar">
+        <span id="roomLabel">Room: public</span>
 
-<h3 class="new-only">Online</h3>
-<ul id="onlineUsers"></ul>
+        <span id="connectionStatus">
+            Connecting...
+        </span>
 
-<div id="adminControls">
-<h3>Admin</h3>
-<label><input id="showIDsCheckbox" type="checkbox" onchange="refreshCurrentRoom()">Show message IDs</label><br>
-<label><input id="showDeleteCheckbox" type="checkbox" onchange="refreshCurrentRoom()">Show delete buttons</label>
-</div>
-</div>
+        <button
+            id="layoutButton"
+            onclick="toggleLayout()"
+        >
+            Switch to New Layout
+        </button>
 
-<div id="chatArea">
-<div id="messages"></div>
-<div id="inputArea">
-<input id="messageInput" type="text" placeholder="Message or command" maxlength="1000" autocomplete="off">
-<button class="primary" onclick="send()">Send</button>
-<button class="danger old-only" onclick="logout()">Logout</button>
-</div>
-</div>
-</div>
+        <button
+            onclick="logout()"
+            class="danger"
+        >
+            Logout
+        </button>
+    </div>
+
+    <div id="main">
+
+        <div id="sidebar">
+
+            <div id="roomControls">
+                <h3>Rooms</h3>
+
+                <button
+                    class="room-button"
+                    onclick="switchRoom('public')"
+                >
+                    Public
+                </button>
+
+                <input
+                    id="roomInput"
+                    type="text"
+                    placeholder="Room name"
+                >
+
+                <button onclick="switchRoomFromInput()">
+                    Join Room
+                </button>
+
+                <button onclick="newRoom()">
+                    New Room
+                </button>
+            </div>
+
+            <h3>Online</h3>
+
+            <ul id="onlineUsers"></ul>
+
+            <div id="adminControls">
+                <h3>Admin</h3>
+
+                <label>
+                    <input
+                        id="showIDsCheckbox"
+                        type="checkbox"
+                        onchange="refreshCurrentRoom()"
+                    >
+                    Show message IDs
+                </label>
+
+                <br>
+
+                <label>
+                    <input
+                        id="showDeleteCheckbox"
+                        type="checkbox"
+                        onchange="refreshCurrentRoom()"
+                    >
+                    Show delete buttons
+                </label>
+            </div>
+
+        </div>
+
+        <div id="chatArea">
+
+            <div id="messages"></div>
+
+            <div id="inputArea">
+
+                <input
+                    id="messageInput"
+                    type="text"
+                    placeholder="Message or command"
+                    maxlength="1000"
+                    autocomplete="off"
+                >
+
+                <button
+                    class="primary"
+                    onclick="send()"
+                >
+                    Send
+                </button>
+
+                <button
+                    class="danger"
+                    onclick="logout()"
+                >
+                    Logout
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
 </div>
 
 <script>
+
 const TRY_CLOUDFLARE_SERVER="wss://__TRY_CLOUDFLARE_URL__/ws";
-const WS_URLS=["wss://chat.legostarwars9.com/ws","ws://chatfqdn.legoserver.playit.plus:16509/ws",TRY_CLOUDFLARE_SERVER];
 
-let socket=null,username="",room="public",isAdmin=false,currentServerIndex=0,reconnectTimer=null,pingTimer=null,manuallyClosed=false,connecting=false;
+const WS_URLS=[
+    "wss://chat.legostarwars9.com/ws",
+    "ws://chatfqdn.legoserver.playit.plus:16509/ws",
+    TRY_CLOUDFLARE_SERVER
+];
 
-function $(id){return document.getElementById(id)}
+let socket=null;
+let username="";
+let room="public";
+let isAdmin=false;
+let currentServerIndex=0;
+let reconnectTimer=null;
+let pingTimer=null;
+let manuallyClosed=false;
+let connecting=false;
 
-function setConnectionStatus(text){$("connectionStatus").textContent=text}
+function $(id){
+    return document.getElementById(id);
+}
+
+function setConnectionStatus(text){
+    $("connectionStatus").textContent=text;
+}
 
 function showLogin(){
     $("loginScreen").style.display="block";
@@ -93,241 +576,629 @@ function showChat(){
     $("loginScreen").style.display="none";
     $("registerScreen").style.display="none";
     $("chatScreen").style.display="block";
+
     $("roomLabel").textContent="Room: "+room;
-    $("adminControls").style.display=isAdmin?"block":"none";
+
+    $("adminControls").style.display=
+        isAdmin?"block":"none";
+}
+
+function updateLayoutButton(){
+    const old=
+        document.body.classList.contains(
+            "old-layout"
+        );
+
+    $("layoutButton").textContent=
+        old
+        ?"Switch to New Layout"
+        :"Switch to Old Layout";
 }
 
 function toggleLayout(){
-    const old=document.body.classList.toggle("old-layout");
-    localStorage.setItem("chat_layout",old?"old":"new");
+
+    const old=
+        document.body.classList.toggle(
+            "old-layout"
+        );
+
+    localStorage.setItem(
+        "chat_layout",
+        old?"old":"new"
+    );
+
+    updateLayoutButton();
 }
 
 function loadLayout(){
-    if(localStorage.getItem("chat_layout")==="old")document.body.classList.add("old-layout");
+
+    const layout=
+        localStorage.getItem(
+            "chat_layout"
+        );
+
+    /*
+     * Old layout is the default.
+     * Only an explicitly saved "new" layout
+     * switches to the new layout.
+     */
+
+    if(layout==="new"){
+        document.body.classList.remove(
+            "old-layout"
+        );
+    }else{
+        document.body.classList.add(
+            "old-layout"
+        );
+    }
+
+    updateLayoutButton();
 }
 
 function connect(){
-    if(manuallyClosed||connecting||(socket&&(socket.readyState===WebSocket.OPEN||socket.readyState===WebSocket.CONNECTING)))return;
+
+    if(
+        manuallyClosed||
+        connecting||
+        (
+            socket&&
+            (
+                socket.readyState===WebSocket.OPEN||
+                socket.readyState===WebSocket.CONNECTING
+            )
+        )
+    ){
+        return;
+    }
+
     connecting=true;
     tryServer(0);
 }
 
 function tryServer(index){
-    if(manuallyClosed){connecting=false;return}
+
+    if(manuallyClosed){
+        connecting=false;
+        return;
+    }
+
     if(index>=WS_URLS.length){
+
         connecting=false;
         socket=null;
-        setConnectionStatus("Disconnected - retrying...");
+
+        setConnectionStatus(
+            "Disconnected - retrying..."
+        );
+
         clearTimeout(reconnectTimer);
-        reconnectTimer=setTimeout(()=>tryServer(0),5000);
+
+        reconnectTimer=
+            setTimeout(
+                ()=>tryServer(0),
+                5000
+            );
+
         return;
     }
 
     currentServerIndex=index;
-    const url=WS_URLS[index];
 
-    if(url.includes("__TRY_CLOUDFLARE_URL__")){
+    const url=
+        WS_URLS[index];
+
+    if(
+        url.includes(
+            "__TRY_CLOUDFLARE_URL__"
+        )
+    ){
         tryServer(index+1);
         return;
     }
 
-    setConnectionStatus("Connecting...");
+    setConnectionStatus(
+        "Connecting..."
+    );
+
     let ws;
 
-    try{ws=new WebSocket(url)}catch(e){tryServer(index+1);return}
+    try{
+        ws=new WebSocket(url);
+    }catch(e){
+        tryServer(index+1);
+        return;
+    }
 
     socket=ws;
 
     ws.onopen=()=>{
+
         if(socket!==ws)return;
+
         connecting=false;
         currentServerIndex=0;
-        setConnectionStatus("Connected");
-        const token=localStorage.getItem("chat_token");
+
+        setConnectionStatus(
+            "Connected"
+        );
+
+        const token=
+            localStorage.getItem(
+                "chat_token"
+            );
 
         if(token){
-            ws.send(JSON.stringify({type:"token_login",token}));
+
+            ws.send(
+                JSON.stringify({
+                    type:"token_login",
+                    token
+                })
+            );
         }
 
         startPing();
     };
 
     ws.onmessage=e=>{
-        if(socket===ws)handleMessage(e);
+
+        if(socket===ws){
+            handleMessage(e);
+        }
     };
 
     ws.onerror=()=>{};
 
     ws.onclose=()=>{
+
         stopPing();
+
         if(socket!==ws)return;
+
         socket=null;
         connecting=false;
+
         if(manuallyClosed)return;
+
         tryServer(index+1);
     };
 }
 
 function sendWS(data){
-    if(!socket||socket.readyState!==WebSocket.OPEN){
-        setConnectionStatus("Disconnected");
+
+    if(
+        !socket||
+        socket.readyState!==WebSocket.OPEN
+    ){
+
+        setConnectionStatus(
+            "Disconnected"
+        );
+
         return false;
     }
-    socket.send(JSON.stringify(data));
+
+    socket.send(
+        JSON.stringify(data)
+    );
+
     return true;
 }
 
 function startPing(){
+
     stopPing();
-    pingTimer=setInterval(()=>{
-        if(socket&&socket.readyState===WebSocket.OPEN)sendWS({type:"ping"});
-    },20000);
+
+    pingTimer=
+        setInterval(
+            ()=>{
+
+                if(
+                    socket&&
+                    socket.readyState===
+                    WebSocket.OPEN
+                ){
+
+                    sendWS({
+                        type:"ping"
+                    });
+                }
+
+            },
+            20000
+        );
 }
 
 function stopPing(){
+
     if(pingTimer){
-        clearInterval(pingTimer);
+
+        clearInterval(
+            pingTimer
+        );
+
         pingTimer=null;
     }
 }
 
 function handleMessage(event){
+
     let data;
-    try{data=JSON.parse(event.data)}catch(e){return}
+
+    try{
+        data=
+            JSON.parse(
+                event.data
+            );
+    }catch(e){
+        return;
+    }
 
     switch(data.type){
-        case "login":handleLogin(data);break;
-        case "token_login":handleTokenLogin(data);break;
-        case "register":handleRegister(data);break;
-        case "connected":handleConnected(data);break;
-        case "message":addMessage(data.message||data);break;
-        case "users":renderUsers(data.users||[]);break;
-        case "room":handleRoom(data);break;
-        case "new_room":handleNewRoom(data);break;
-        case "command":handleCommand(data);break;
-        case "refresh":refreshCurrentRoom();break;
-        case "logout":cleanupLocalLogin();break;
-        case "pong":break;
-        case "error":handleError(data.message);break;
+
+        case "login":
+            handleLogin(data);
+            break;
+
+        case "token_login":
+            handleTokenLogin(data);
+            break;
+
+        case "register":
+            handleRegister(data);
+            break;
+
+        case "connected":
+            handleConnected(data);
+            break;
+
+        case "message":
+            addMessage(
+                data.message||data
+            );
+            break;
+
+        case "users":
+            renderUsers(
+                data.users||[]
+            );
+            break;
+
+        case "room":
+            handleRoom(data);
+            break;
+
+        case "new_room":
+            handleNewRoom(data);
+            break;
+
+        case "command":
+            handleCommand(data);
+            break;
+
+        case "refresh":
+            refreshCurrentRoom();
+            break;
+
+        case "logout":
+            cleanupLocalLogin();
+            break;
+
+        case "pong":
+            break;
+
+        case "error":
+            handleError(
+                data.message
+            );
+            break;
     }
 }
 
 function login(){
-    const user=$("loginUsername").value.trim();
-    const password=$("loginPassword").value;
+
+    const user=
+        $("loginUsername").value.trim();
+
+    const password=
+        $("loginPassword").value;
 
     if(!user||!password){
-        $("loginMessage").textContent="Enter a username and password.";
+
+        $("loginMessage").textContent=
+            "Enter a username and password.";
+
         return;
     }
 
-    if(!sendWS({type:"login",username:user,password}))$("loginMessage").textContent="Not connected to the server.";
+    if(
+        !sendWS({
+            type:"login",
+            username:user,
+            password
+        })
+    ){
+
+        $("loginMessage").textContent=
+            "Not connected to the server.";
+    }
 }
 
 function handleLogin(data){
+
     if(data.status==="ok"){
-        username=data.username||data.user||"";
-        if(data.token)localStorage.setItem("chat_token",data.token);
-        if(username)localStorage.setItem("chat_user",username);
+
+        username=
+            data.username||
+            data.user||
+            "";
+
+        if(data.token){
+
+            localStorage.setItem(
+                "chat_token",
+                data.token
+            );
+        }
+
+        if(username){
+
+            localStorage.setItem(
+                "chat_user",
+                username
+            );
+        }
+
         return;
     }
 
-    const messages={fail:"Invalid username or password.",banned:"You are banned.",ip_banned:"Your IP is banned."};
-    $("loginMessage").textContent=messages[data.status]||"Login failed.";
+    const messages={
+        fail:
+            "Invalid username or password.",
+        banned:
+            "You are banned.",
+        ip_banned:
+            "Your IP is banned."
+    };
+
+    $("loginMessage").textContent=
+        messages[data.status]||
+        "Login failed.";
 }
 
 function handleTokenLogin(data){
+
     if(data.status==="ok"){
-        username=data.username||data.user||localStorage.getItem("chat_user")||"";
-        if(data.token)localStorage.setItem("chat_token",data.token);
+
+        username=
+            data.username||
+            data.user||
+            localStorage.getItem(
+                "chat_user"
+            )||
+            "";
+
+        if(data.token){
+
+            localStorage.setItem(
+                "chat_token",
+                data.token
+            );
+        }
+
         return;
     }
 
-    localStorage.removeItem("chat_token");
-    localStorage.removeItem("chat_user");
+    localStorage.removeItem(
+        "chat_token"
+    );
+
+    localStorage.removeItem(
+        "chat_user"
+    );
+
     username="";
     isAdmin=false;
+
     showLogin();
-    $("loginMessage").textContent="Your login session expired. Please log in again.";
+
+    $("loginMessage").textContent=
+        "Your login session expired. Please log in again.";
 }
 
 function register(){
-    const user=$("registerUsername").value.trim();
-    const password=$("registerPassword").value;
+
+    const user=
+        $("registerUsername").value.trim();
+
+    const password=
+        $("registerPassword").value;
 
     if(!user||!password){
-        $("registerMessage").textContent="Enter a username and password.";
+
+        $("registerMessage").textContent=
+            "Enter a username and password.";
+
         return;
     }
 
-    if(!sendWS({type:"register",username:user,password}))$("registerMessage").textContent="Not connected to the server.";
+    if(
+        !sendWS({
+            type:"register",
+            username:user,
+            password
+        })
+    ){
+
+        $("registerMessage").textContent=
+            "Not connected to the server.";
+    }
 }
 
 function handleRegister(data){
-    const messages={exists:"That username already exists.",invalid:"Enter a username and password.",invalid_characters:"Username cannot contain ':'."};
+
+    const messages={
+        exists:
+            "That username already exists.",
+
+        invalid:
+            "Enter a username and password.",
+
+        invalid_characters:
+            "Username cannot contain ':'."
+    };
 
     if(data.status==="ok"){
-        $("registerMessage").textContent="Account created.";
-        setTimeout(showLogin,500);
+
+        $("registerMessage").textContent=
+            "Account created.";
+
+        setTimeout(
+            showLogin,
+            500
+        );
+
         return;
     }
 
-    $("registerMessage").textContent=messages[data.status]||"Registration failed.";
+    $("registerMessage").textContent=
+        messages[data.status]||
+        "Registration failed.";
 }
 
 function handleConnected(data){
-    username=data.username||data.user||localStorage.getItem("chat_user")||"";
-    room=data.room||"public";
-    isAdmin=!!data.is_admin;
 
-    if(data.token)localStorage.setItem("chat_token",data.token);
-    if(username)localStorage.setItem("chat_user",username);
+    username=
+        data.username||
+        data.user||
+        localStorage.getItem(
+            "chat_user"
+        )||
+        "";
+
+    room=
+        data.room||
+        "public";
+
+    isAdmin=
+        !!data.is_admin;
+
+    if(data.token){
+
+        localStorage.setItem(
+            "chat_token",
+            data.token
+        );
+    }
+
+    if(username){
+
+        localStorage.setItem(
+            "chat_user",
+            username
+        );
+    }
 
     showChat();
 
-    if(Array.isArray(data.messages))renderMessages(data.messages);
-    if(Array.isArray(data.users))renderUsers(data.users);
+    if(Array.isArray(data.messages)){
+        renderMessages(
+            data.messages
+        );
+    }
 
-    if(!data.is_admin)checkAdmin();
+    if(Array.isArray(data.users)){
+        renderUsers(
+            data.users
+        );
+    }
+
+    if(!data.is_admin){
+        checkAdmin();
+    }
 }
 
 function logout(){
+
     manuallyClosed=true;
-    clearTimeout(reconnectTimer);
+
+    clearTimeout(
+        reconnectTimer
+    );
+
     stopPing();
 
-    if(socket&&socket.readyState===WebSocket.OPEN){
-        sendWS({type:"logout"});
-        setTimeout(()=>{
-            if(socket)socket.close();
-            cleanupLocalLogin();
-        },100);
+    if(
+        socket&&
+        socket.readyState===WebSocket.OPEN
+    ){
+
+        sendWS({
+            type:"logout"
+        });
+
+        setTimeout(
+            ()=>{
+                if(socket){
+                    socket.close();
+                }
+
+                cleanupLocalLogin();
+            },
+            100
+        );
+
     }else{
+
         cleanupLocalLogin();
     }
 }
 
 function cleanupLocalLogin(){
-    localStorage.removeItem("chat_token");
-    localStorage.removeItem("chat_user");
+
+    localStorage.removeItem(
+        "chat_token"
+    );
+
+    localStorage.removeItem(
+        "chat_user"
+    );
+
     username="";
     room="public";
     isAdmin=false;
+
     showLogin();
+
     $("loginMessage").textContent="";
     $("registerMessage").textContent="";
 }
 
 function send(){
-    const input=$("messageInput");
-    const message=input.value.trim();
+
+    const input=
+        $("messageInput");
+
+    const message=
+        input.value.trim();
 
     if(!message)return;
 
     if(message.startsWith("/")){
-        sendWS({type:"command",command:message});
+
+        sendWS({
+            type:"command",
+            command:message
+        });
+
     }else{
-        sendWS({type:"send",room,message});
+
+        sendWS({
+            type:"send",
+            room,
+            message
+        });
     }
 
     input.value="";
@@ -335,33 +1206,83 @@ function send(){
 }
 
 function sendCommand(command){
-    return sendWS({type:"command",command});
+
+    return sendWS({
+        type:"command",
+        command
+    });
 }
 
 function checkAdmin(){
-    sendCommand("/checkrole");
+
+    sendCommand(
+        "/checkrole"
+    );
 }
 
 function handleCommand(data){
+
     if(data.role!==undefined){
-        isAdmin=data.role==="admin";
-        $("adminControls").style.display=isAdmin?"block":"none";
-        if(isAdmin)refreshCurrentRoom();
+
+        isAdmin=
+            data.role==="admin";
+
+        $("adminControls").style.display=
+            isAdmin?"block":"none";
+
+        if(isAdmin){
+            refreshCurrentRoom();
+        }
+
         return;
     }
 
-    if(data.status_code>=400)handleError(data.message||"Command failed.");
+    if(data.status_code>=400){
+
+        handleError(
+            data.message||
+            "Command failed."
+        );
+    }
 }
 
 function handleError(message){
-    const messages={muted:"You are muted.",rate:"You are sending messages too quickly.",banned:"You are banned.",ip_banned:"Your IP is banned.","Not logged in":"Your login session is no longer valid."};
-    const text=messages[message]||message||"Server error";
+
+    const messages={
+        muted:
+            "You are muted.",
+
+        rate:
+            "You are sending messages too quickly.",
+
+        banned:
+            "You are banned.",
+
+        ip_banned:
+            "Your IP is banned.",
+
+        "Not logged in":
+            "Your login session is no longer valid."
+    };
+
+    const text=
+        messages[message]||
+        message||
+        "Server error";
 
     if(message==="Not logged in"){
-        localStorage.removeItem("chat_token");
-        localStorage.removeItem("chat_user");
+
+        localStorage.removeItem(
+            "chat_token"
+        );
+
+        localStorage.removeItem(
+            "chat_user"
+        );
+
         username="";
         isAdmin=false;
+
         showLogin();
     }
 
@@ -369,95 +1290,237 @@ function handleError(message){
 }
 
 function renderMessages(messages){
-    const container=$("messages");
+
+    const container=
+        $("messages");
+
     container.innerHTML="";
-    messages.forEach(addMessage);
-    container.scrollTop=container.scrollHeight;
+
+    messages.forEach(
+        addMessage
+    );
+
+    container.scrollTop=
+        container.scrollHeight;
 }
 
 function addMessage(data){
+
     if(!data)return;
 
-    const message=data.text||"";
+    let message=
+        data.text||"";
+
     if(!message)return;
 
-    const div=document.createElement("div");
-    div.className="message";
-    div.textContent=message;
+    /*
+     * Change only the separator between
+     * the timestamp and username.
+     *
+     * [02:50:50]|hi: hmm
+     * becomes
+     * [02:50:50] hi: hmm
+     */
 
-    if($("showIDsCheckbox").checked&&data.id){
-        const id=document.createElement("span");
-        id.className="message-id";
-        id.textContent="ID: "+data.id;
+    message=
+        message.replace(
+            /^(\[\d{2}:\d{2}:\d{2}\])\|/,
+            "$1 "
+        );
+
+    const div=
+        document.createElement(
+            "div"
+        );
+
+    div.className="message";
+
+    div.textContent=
+        message;
+
+    if(
+        $("showIDsCheckbox").checked&&
+        data.id
+    ){
+
+        const id=
+            document.createElement(
+                "span"
+            );
+
+        id.className=
+            "message-id";
+
+        id.textContent=
+            "ID: "+data.id;
+
         div.appendChild(id);
     }
 
-    if($("showDeleteCheckbox").checked&&data.id&&isAdmin){
-        const button=document.createElement("button");
-        button.className="delete-button danger";
-        button.textContent="Delete";
-        button.onclick=()=>deleteMsg(data.id);
-        div.appendChild(button);
+    if(
+        $("showDeleteCheckbox").checked&&
+        data.id&&
+        isAdmin
+    ){
+
+        const button=
+            document.createElement(
+                "button"
+            );
+
+        button.className=
+            "delete-button danger";
+
+        button.textContent=
+            "Delete";
+
+        button.onclick=
+            ()=>deleteMsg(data.id);
+
+        div.appendChild(
+            button
+        );
     }
 
-    $("messages").appendChild(div);
-    $("messages").scrollTop=$("messages").scrollHeight;
+    $("messages").appendChild(
+        div
+    );
+
+    $("messages").scrollTop=
+        $("messages").scrollHeight;
 }
 
 function deleteMsg(id){
-    if(id)sendCommand("/delete "+id);
+
+    if(id){
+
+        sendCommand(
+            "/delete "+id
+        );
+    }
 }
 
 function switchRoom(roomName){
-    roomName=String(roomName||"").trim();
-    if(roomName)sendWS({type:"join",room:roomName});
+
+    roomName=
+        String(
+            roomName||""
+        ).trim();
+
+    if(roomName){
+
+        sendWS({
+            type:"join",
+            room:roomName
+        });
+    }
 }
 
 function switchRoomFromInput(){
-    switchRoom($("roomInput").value);
+
+    switchRoom(
+        $("roomInput").value
+    );
 }
 
 function handleRoom(data){
-    if(data.room)room=data.room;
-    $("roomLabel").textContent="Room: "+room;
-    renderMessages(data.messages||[]);
+
+    if(data.room){
+        room=data.room;
+    }
+
+    $("roomLabel").textContent=
+        "Room: "+room;
+
+    renderMessages(
+        data.messages||[]
+    );
 }
 
 function refreshCurrentRoom(){
-    if(socket&&socket.readyState===WebSocket.OPEN)sendWS({type:"join",room});
+
+    if(
+        socket&&
+        socket.readyState===
+        WebSocket.OPEN
+    ){
+
+        sendWS({
+            type:"join",
+            room
+        });
+    }
 }
 
 function newRoom(){
-    sendWS({type:"new_room"});
-}
 
-function handleNewRoom(data){
-    if(data.room)room=data.room;
-    $("roomLabel").textContent="Room: "+room;
-    renderMessages(data.messages||[]);
-}
-
-function renderUsers(users){
-    const list=$("onlineUsers");
-    list.innerHTML="";
-    users.forEach(user=>{
-        const li=document.createElement("li");
-        li.textContent=user;
-        list.appendChild(li);
+    sendWS({
+        type:"new_room"
     });
 }
 
-$("messageInput").addEventListener("keydown",e=>{
-    if(e.key==="Enter"){
-        e.preventDefault();
-        send();
-    }
-});
+function handleNewRoom(data){
 
-window.addEventListener("load",()=>{
-    loadLayout();
-    connect();
-});
+    if(data.room){
+        room=data.room;
+    }
+
+    $("roomLabel").textContent=
+        "Room: "+room;
+
+    renderMessages(
+        data.messages||[]
+    );
+}
+
+function renderUsers(users){
+
+    const list=
+        $("onlineUsers");
+
+    list.innerHTML="";
+
+    users.forEach(
+        user=>{
+
+            const li=
+                document.createElement(
+                    "li"
+                );
+
+            li.textContent=
+                user;
+
+            list.appendChild(
+                li
+            );
+        }
+    );
+}
+
+$("messageInput").addEventListener(
+    "keydown",
+    e=>{
+
+        if(e.key==="Enter"){
+
+            e.preventDefault();
+
+            send();
+        }
+    }
+);
+
+window.addEventListener(
+    "load",
+    ()=>{
+
+        loadLayout();
+        connect();
+    }
+);
+
 </script>
+
 </body>
 </html>
