@@ -108,10 +108,16 @@ const statusPopup = document.getElementById("statusPopup");
 const fetchOptions = (method, body = null) => {
     const opts = {
         method: method,
-        credentials: "include", // Crucial for cross-origin Flask cookies
-        headers: { "Content-Type": "application/json" }
+        credentials: "include"
     };
-    if (body) opts.body = JSON.stringify(body);
+
+    if (body !== null) {
+        opts.headers = {
+            "Content-Type": "application/json"
+        };
+        opts.body = JSON.stringify(body);
+    }
+
     return opts;
 };
 
