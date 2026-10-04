@@ -567,23 +567,27 @@ function setFaviconNotification(enabled){
 
     const favicon=$("favicon");
 
-    if(enabled){
-
-        favicon.href=
-            "favicon-notification.png?v="+Date.now();
-
-    }else{
-
-        favicon.href=
-            "favicon.png?v="+Date.now();
-
-    }
+    favicon.href=
+        enabled
+        ?"favicon-notification.png"
+        :"favicon.png";
 }
 
 function clearMessageNotification(){
+
     unreadMessages=0;
+
     setFaviconNotification(false);
 }
+
+document.addEventListener(
+    "visibilitychange",
+    ()=>{
+        if(!document.hidden){
+            clearMessageNotification();
+        }
+    }
+);
 
 function isChatAtBottom(){
     const messages=$("messages");
@@ -1352,7 +1356,7 @@ function renderMessages(messages){
 }
 
 function addMessage(data){
-    const wasAtBottom=isChatAtBottom();
+    
     if(!data)return;
 
     let message=
@@ -1433,15 +1437,14 @@ function addMessage(data){
         div
     );
 
-    if(wasAtBottom){
     $("messages").scrollTop=
         $("messages").scrollHeight;
+    if(document.hidden){
 
-    clearMessageNotification();
-    }else{
     unreadMessages++;
+
     setFaviconNotification(true);
-    }
+}
 }
 
 function deleteMsg(id){
