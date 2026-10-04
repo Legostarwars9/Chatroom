@@ -2,1605 +2,462 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Web Chat</title>
-
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chatroom</title>
 <style>
-    * {
-        box-sizing: border-box;
-    }
-
-    body {
-        margin: 0;
-        font-family: Arial, sans-serif;
-        background: #111;
-        color: #eee;
-    }
-
-    button,
-    input {
-        font: inherit;
-    }
-
-    button {
-        cursor: pointer;
-    }
-
-    #loginScreen,
-    #registerScreen {
-        width: 350px;
-        max-width: calc(100% - 30px);
-        margin: 80px auto;
-        padding: 25px;
-        background: #1c1c1c;
-        border-radius: 10px;
-    }
-
-    #loginScreen h1,
-    #registerScreen h1 {
-        margin-top: 0;
-        text-align: center;
-    }
-
-    input {
-        width: 100%;
-        padding: 10px;
-        margin: 5px 0;
-        border: 1px solid #444;
-        border-radius: 5px;
-        background: #111;
-        color: white;
-    }
-
-    button {
-        padding: 9px 14px;
-        margin: 4px 2px;
-        border: none;
-        border-radius: 5px;
-        background: #333;
-        color: white;
-    }
-
-    button:hover {
-        background: #444;
-    }
-
-    .primary {
-        background: #2463d4;
-    }
-
-    .primary:hover {
-        background: #3174ed;
-    }
-
-    .danger {
-        background: #9b2525;
-    }
-
-    .danger:hover {
-        background: #bd3030;
-    }
-
-    .message {
-        margin: 5px 0;
-        padding: 7px 10px;
-        background: #181818;
-        border-radius: 5px;
-        word-wrap: break-word;
-    }
-
-    .message-id {
-        color: #777;
-        font-size: 11px;
-        margin-left: 5px;
-    }
-
-    .delete-button {
-        margin-left: 8px;
-        padding: 3px 7px;
-        font-size: 11px;
-    }
-
-    #chatScreen {
-        display: none;
-        height: 100vh;
-        overflow: hidden;
-    }
-
-    #topBar {
-        height: 55px;
-        background: #1b1b1b;
-        border-bottom: 1px solid #333;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 12px;
-    }
-
-    #roomLabel {
-        font-weight: bold;
-        margin-right: auto;
-    }
-
-    #connectionStatus {
-        font-size: 12px;
-        color: #aaa;
-    }
-
-    #main {
-        display: flex;
-        height: calc(100vh - 55px);
-    }
-
-    #sidebar {
-        width: 220px;
-        min-width: 180px;
-        background: #171717;
-        border-right: 1px solid #333;
-        padding: 12px;
-        overflow-y: auto;
-    }
-
-    #sidebar h3 {
-        margin-top: 5px;
-    }
-
-    #onlineUsers {
-        list-style: none;
-        padding: 0;
-        margin: 5px 0;
-    }
-
-    #onlineUsers li {
-        padding: 4px;
-    }
-
-    #chatArea {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        min-width: 0;
-    }
-
-    #messages {
-        flex: 1;
-        overflow-y: auto;
-        padding: 12px;
-    }
-
-    #inputArea {
-        display: flex;
-        gap: 5px;
-        padding: 10px;
-        background: #1b1b1b;
-        border-top: 1px solid #333;
-    }
-
-    #messageInput {
-        flex: 1;
-        margin: 0;
-    }
-
-    #roomControls {
-        margin-bottom: 15px;
-    }
-
-    #roomControls input {
-        margin-bottom: 4px;
-    }
-
-    #adminControls {
-        display: none;
-        border-top: 1px solid #333;
-        margin-top: 15px;
-        padding-top: 10px;
-    }
-
-    #loginMessage,
-    #registerMessage {
-        min-height: 20px;
-        color: #f66;
-        margin-top: 8px;
-    }
-
-    #registerScreen {
-        display: none;
-    }
-
-    .room-button {
-        width: 100%;
-        text-align: left;
-        margin: 2px 0;
-    }
-
-    @media (max-width: 700px) {
-        #sidebar {
-            width: 160px;
-            min-width: 160px;
-        }
-
-        #topBar {
-            overflow-x: auto;
-        }
-    }
+*{box-sizing:border-box}body{margin:0;background:#111;color:#eee;font-family:Arial,sans-serif}button,input{font:inherit}button{cursor:pointer;padding:9px 14px;margin:4px 2px;border:0;border-radius:5px;background:#333;color:#fff}button:hover{background:#444}.primary{background:#2463d4}.primary:hover{background:#3174ed}.danger{background:#9b2525}.danger:hover{background:#bd3030}input{width:100%;padding:10px;margin:5px 0;border:1px solid #444;border-radius:5px;background:#111;color:#fff}#loginScreen,#registerScreen{width:350px;max-width:calc(100% - 30px);margin:80px auto;padding:25px;background:#1c1c1c;border-radius:10px}#loginScreen h1,#registerScreen h1{text-align:center;margin-top:0}#registerScreen{display:none}.login-toggle{text-align:center;margin-top:12px}#loginMessage,#registerMessage{min-height:20px;color:#f66;margin-top:8px}.layout-button{position:fixed;top:10px;right:10px;z-index:20}.message{margin:5px 0;padding:7px 10px;background:#181818;border-radius:5px;word-wrap:break-word}.message-id{color:#777;font-size:11px;margin-left:5px}.delete-button{margin-left:8px;padding:3px 7px;font-size:11px}#chatScreen{display:none;height:100vh;overflow:hidden}#topBar{height:55px;background:#1b1b1b;border-bottom:1px solid #333;display:flex;align-items:center;gap:8px;padding:8px 12px}#roomLabel{font-weight:bold;margin-right:auto}#connectionStatus{font-size:12px;color:#aaa}#main{display:flex;height:calc(100vh - 55px)}#sidebar{width:220px;min-width:180px;background:#171717;border-right:1px solid #333;padding:12px;overflow-y:auto}#sidebar h3{margin-top:5px}#onlineUsers{list-style:none;padding:0;margin:5px 0}#onlineUsers li{padding:4px}#chatArea{flex:1;display:flex;flex-direction:column;min-width:0}#messages{flex:1;overflow-y:auto;padding:12px}#inputArea{display:flex;gap:5px;padding:10px;background:#1b1b1b;border-top:1px solid #333}#messageInput{flex:1;margin:0}#roomControls{margin-bottom:15px}#adminControls{display:none;border-top:1px solid #333;margin-top:15px;padding-top:10px}#adminControls input{width:auto;margin-right:5px}.room-button{width:100%;text-align:left;margin:2px 0}.old-only{display:none}.old-layout{background:#1e2128}.old-layout #topBar{display:none}.old-layout #main{height:100vh}.old-layout #sidebar{order:2;width:180px;min-width:180px;background:#14161c;border-left:1px solid #3a3f4a;border-right:0;padding:10px}.old-layout #chatArea{order:1;padding:15px}.old-layout #chatArea:before{content:"Website Chat";display:block;color:#7aa2f7;font-size:1.5em;font-weight:bold;margin:0 0 15px}.old-layout #messages{height:65vh;flex:none;background:#111;border:1px solid #3a3f4a;overflow-y:auto;padding:6px;white-space:pre-wrap}.old-layout #inputArea{display:block;background:transparent;border:0;padding:0;margin-top:4px}.old-layout #messageInput{display:inline-block;width:70%;background:#2a2f3a;border:1px solid #3a3f4a;border-radius:0;padding:5px}.old-layout #inputArea button{padding:5px;margin:2px}.old-layout #roomControls{margin-bottom:10px}.old-layout #roomControls h3{display:none}.old-layout #roomControls .room-button{width:auto;text-align:center}.old-layout #roomInput{width:120px;padding:5px;border-radius:0;background:#2a2f3a}.old-layout #roomControls button{padding:5px}.old-layout #adminControls{border:0;margin:0;padding:0}.old-layout .message{background:transparent;border-radius:0;margin-bottom:4px;padding:0}.old-layout .message-id{color:#555;font-size:10px}.old-layout #connectionStatus{position:absolute;right:10px;bottom:10px}.old-layout #sidebar:before{content:"Online Users";font-weight:bold;display:block;margin-bottom:8px}.old-layout #onlineUsers{margin-top:0}.old-layout .layout-button{background:#2a2f3a;border:1px solid #3a3f4a}body:not(.old-layout) .old-only{display:none}@media(max-width:700px){#sidebar{width:160px;min-width:160px}.old-layout #sidebar{width:180px;min-width:180px}}
 </style>
 </head>
-
 <body>
+<button class="layout-button" onclick="toggleLayout()">Switch Layout</button>
 
 <div id="loginScreen">
-    <h1>Web Chat</h1>
-
-    <input
-        id="loginUsername"
-        type="text"
-        placeholder="Username"
-        autocomplete="username"
-    >
-
-    <input
-        id="loginPassword"
-        type="password"
-        placeholder="Password"
-        autocomplete="current-password"
-    >
-
-    <button class="primary" onclick="login()">Login</button>
-    <button onclick="showRegister()">Register</button>
-
-    <div id="loginMessage"></div>
+<h1>Web Chat</h1>
+<input id="loginUsername" type="text" placeholder="Username" autocomplete="username">
+<input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password">
+<button class="primary" onclick="login()">Login</button>
+<button onclick="showRegister()">Register</button>
+<div id="loginMessage"></div>
 </div>
-
 
 <div id="registerScreen">
-    <h1>Register</h1>
-
-    <input
-        id="registerUsername"
-        type="text"
-        placeholder="Username"
-        autocomplete="username"
-    >
-
-    <input
-        id="registerPassword"
-        type="password"
-        placeholder="Password"
-        autocomplete="new-password"
-    >
-
-    <button class="primary" onclick="register()">Register</button>
-    <button onclick="showLogin()">Back</button>
-
-    <div id="registerMessage"></div>
+<h1>Register</h1>
+<input id="registerUsername" type="text" placeholder="Username" autocomplete="username">
+<input id="registerPassword" type="password" placeholder="Password" autocomplete="new-password">
+<button class="primary" onclick="register()">Register</button>
+<button onclick="showLogin()">Back</button>
+<div id="registerMessage"></div>
 </div>
-
 
 <div id="chatScreen">
-
-    <div id="topBar">
-
-        <span id="roomLabel">Public</span>
-
-        <span id="connectionStatus">
-            Connecting...
-        </span>
-
-        <button onclick="logout()">
-            Logout
-        </button>
-
-    </div>
-
-
-    <div id="main">
-
-        <div id="sidebar">
-
-            <div id="roomControls">
-
-                <h3>Rooms</h3>
-
-                <button
-                    class="room-button"
-                    onclick="switchRoom('public')"
-                >
-                    Public
-                </button>
-
-                <input
-                    id="roomInput"
-                    type="text"
-                    placeholder="Room name"
-                >
-
-                <button onclick="switchRoomFromInput()">
-                    Join Room
-                </button>
-
-                <button onclick="newRoom()">
-                    New Room
-                </button>
-
-            </div>
-
-
-            <h3>Online</h3>
-
-            <ul id="onlineUsers"></ul>
-
-
-            <div id="adminControls">
-
-                <h3>Admin</h3>
-
-                <label>
-                    <input
-                        id="showIDsCheckbox"
-                        type="checkbox"
-                        onchange="refreshCurrentRoom()"
-                    >
-                    Show message IDs
-                </label>
-
-                <br>
-
-                <label>
-                    <input
-                        id="showDeleteCheckbox"
-                        type="checkbox"
-                        onchange="refreshCurrentRoom()"
-                    >
-                    Show delete buttons
-                </label>
-
-            </div>
-
-        </div>
-
-
-        <div id="chatArea">
-
-            <div id="messages"></div>
-
-            <div id="inputArea">
-
-                <input
-                    id="messageInput"
-                    type="text"
-                    placeholder="Message..."
-                    autocomplete="off"
-                >
-
-                <button
-                    class="primary"
-                    onclick="send()"
-                >
-                    Send
-                </button>
-
-            </div>
-
-        </div>
-
-    </div>
-
+<div id="topBar">
+<span id="roomLabel">Room: public</span>
+<span id="connectionStatus">Connecting...</span>
+<button onclick="toggleLayout()">Switch Layout</button>
+<button onclick="logout()">Logout</button>
 </div>
 
+<div id="main">
+<div id="sidebar">
+<div id="roomControls">
+<h3>Rooms</h3>
+<button class="room-button" onclick="switchRoom('public')">Public</button>
+<input id="roomInput" type="text" placeholder="Room name">
+<button onclick="switchRoomFromInput()">Join Room</button>
+<button onclick="newRoom()">New Room</button>
+</div>
+
+<h3 class="new-only">Online</h3>
+<ul id="onlineUsers"></ul>
+
+<div id="adminControls">
+<h3>Admin</h3>
+<label><input id="showIDsCheckbox" type="checkbox" onchange="refreshCurrentRoom()">Show message IDs</label><br>
+<label><input id="showDeleteCheckbox" type="checkbox" onchange="refreshCurrentRoom()">Show delete buttons</label>
+</div>
+</div>
+
+<div id="chatArea">
+<div id="messages"></div>
+<div id="inputArea">
+<input id="messageInput" type="text" placeholder="Message or command" maxlength="1000" autocomplete="off">
+<button class="primary" onclick="send()">Send</button>
+<button class="danger old-only" onclick="logout()">Logout</button>
+</div>
+</div>
+</div>
+</div>
 
 <script>
+const TRY_CLOUDFLARE_SERVER="wss://__TRY_CLOUDFLARE_URL__/ws";
+const WS_URLS=["wss://chat.legostarwars9.com/ws","ws://chatfqdn.legoserver.playit.plus:16509/ws",TRY_CLOUDFLARE_SERVER];
 
-/*
- * ============================================================
- * WebSocket servers
- * ============================================================
- *
- * The startup script automatically replaces the
- * TRY_CLOUDFLARE_SERVER line with the current Quick Tunnel.
- *
- * Keep the permanent servers first.
- */
+let socket=null,username="",room="public",isAdmin=false,currentServerIndex=0,reconnectTimer=null,pingTimer=null,manuallyClosed=false,connecting=false;
 
-const TRY_CLOUDFLARE_SERVER =
-    "wss://part-cape-pieces-use.trycloudflare.com/ws";
+function $(id){return document.getElementById(id)}
 
-const WS_URLS = [
-    "wss://chat.legostarwars9.com/ws",
+function setConnectionStatus(text){$("connectionStatus").textContent=text}
 
-    // CHANGE THIS to your actual permanent backup domain.
-    "ws://chatfqdn.legoserver.playit.plus:16509/ws",
-
-    TRY_CLOUDFLARE_SERVER
-];
-
-
-/*
- * ============================================================
- * State
- * ============================================================
- */
-
-let socket = null;
-
-let username = "";
-let room = "public";
-let isAdmin = false;
-
-let currentServerIndex = 0;
-let reconnectTimer = null;
-let pingTimer = null;
-
-let manuallyClosed = false;
-
-
-/*
- * ============================================================
- * Utility
- * ============================================================
- */
-
-function setConnectionStatus(text) {
-    document.getElementById("connectionStatus").textContent = text;
+function showLogin(){
+    $("loginScreen").style.display="block";
+    $("registerScreen").style.display="none";
+    $("chatScreen").style.display="none";
 }
 
-
-function showLogin() {
-    document.getElementById("loginScreen").style.display = "block";
-    document.getElementById("registerScreen").style.display = "none";
-    document.getElementById("chatScreen").style.display = "none";
+function showRegister(){
+    $("loginScreen").style.display="none";
+    $("registerScreen").style.display="block";
 }
 
-
-function showRegister() {
-    document.getElementById("loginScreen").style.display = "none";
-    document.getElementById("registerScreen").style.display = "block";
+function showChat(){
+    $("loginScreen").style.display="none";
+    $("registerScreen").style.display="none";
+    $("chatScreen").style.display="block";
+    $("roomLabel").textContent="Room: "+room;
+    $("adminControls").style.display=isAdmin?"block":"none";
 }
 
-
-function showChat() {
-    document.getElementById("loginScreen").style.display = "none";
-    document.getElementById("registerScreen").style.display = "none";
-    document.getElementById("chatScreen").style.display = "block";
-
-    document.getElementById("roomLabel").textContent =
-        "Room: " + room;
-
-    if (isAdmin) {
-        document.getElementById("adminControls").style.display = "block";
-    } else {
-        document.getElementById("adminControls").style.display = "none";
-    }
+function toggleLayout(){
+    const old=document.body.classList.toggle("old-layout");
+    localStorage.setItem("chat_layout",old?"old":"new");
 }
 
+function loadLayout(){
+    if(localStorage.getItem("chat_layout")==="old")document.body.classList.add("old-layout");
+}
 
-/*
- * ============================================================
- * WebSocket connection
- * ============================================================
- */
-
-function connect() {
-
-    if (
-        socket &&
-        (
-            socket.readyState === WebSocket.OPEN ||
-            socket.readyState === WebSocket.CONNECTING
-        )
-    ) {
-        return;
-    }
-
-    manuallyClosed = false;
-
+function connect(){
+    if(manuallyClosed||connecting||(socket&&(socket.readyState===WebSocket.OPEN||socket.readyState===WebSocket.CONNECTING)))return;
+    connecting=true;
     tryServer(0);
 }
 
-
-function tryServer(index) {
-
-    if (manuallyClosed) {
-        return;
-    }
-
-    if (index >= WS_URLS.length) {
-
-        setConnectionStatus(
-            "Disconnected - retrying..."
-        );
-
-        socket = null;
-
+function tryServer(index){
+    if(manuallyClosed){connecting=false;return}
+    if(index>=WS_URLS.length){
+        connecting=false;
+        socket=null;
+        setConnectionStatus("Disconnected - retrying...");
         clearTimeout(reconnectTimer);
-
-        reconnectTimer = setTimeout(() => {
-            tryServer(0);
-        }, 5000);
-
+        reconnectTimer=setTimeout(()=>tryServer(0),5000);
         return;
     }
 
+    currentServerIndex=index;
+    const url=WS_URLS[index];
 
-    currentServerIndex = index;
-
-    const url = WS_URLS[index];
-
-    /*
-     * Do not try the placeholder if the startup script
-     * has not inserted a Quick Tunnel yet.
-     */
-    if (
-        url.includes("__TRY_CLOUDFLARE_URL__")
-    ) {
-        tryServer(index + 1);
+    if(url.includes("__TRY_CLOUDFLARE_URL__")){
+        tryServer(index+1);
         return;
     }
 
-
-    setConnectionStatus(
-        "Connecting..."
-    );
-
-    console.log(
-        "Trying WebSocket server:",
-        url
-    );
-
-
+    setConnectionStatus("Connecting...");
     let ws;
 
-    try {
-        ws = new WebSocket(url);
-    } catch (error) {
+    try{ws=new WebSocket(url)}catch(e){tryServer(index+1);return}
 
-        console.error(
-            "Failed to create WebSocket:",
-            error
-        );
+    socket=ws;
 
-        tryServer(index + 1);
+    ws.onopen=()=>{
+        if(socket!==ws)return;
+        connecting=false;
+        currentServerIndex=0;
+        setConnectionStatus("Connected");
+        const token=localStorage.getItem("chat_token");
 
-        return;
-    }
-
-
-    socket = ws;
-
-
-    ws.onopen = () => {
-
-        if (socket !== ws) {
-            return;
+        if(token){
+            ws.send(JSON.stringify({type:"token_login",token}));
         }
-
-        console.log(
-            "Connected to:",
-            url
-        );
-
-        setConnectionStatus(
-            "Connected"
-        );
-
-
-        /*
-         * A successful connection means that future
-         * failures should try the primary again.
-         */
-        currentServerIndex = 0;
-
-
-        /*
-         * Send the saved authentication token if
-         * the user was previously logged in.
-         */
-        const token =
-            localStorage.getItem("chat_token");
-
-        if (token) {
-
-            ws.send(JSON.stringify({
-                type: "token_login",
-                token: token
-            }));
-
-        }
-
 
         startPing();
     };
 
-
-    ws.onmessage = (event) => {
-
-        if (socket !== ws) {
-            return;
-        }
-
-        handleWebSocketMessage(event);
-
+    ws.onmessage=e=>{
+        if(socket===ws)handleMessage(e);
     };
 
+    ws.onerror=()=>{};
 
-    ws.onerror = (error) => {
-
-        console.error(
-            "WebSocket error:",
-            url,
-            error
-        );
-
-    };
-
-
-    ws.onclose = () => {
-
-        console.log(
-            "WebSocket closed:",
-            url
-        );
-
+    ws.onclose=()=>{
         stopPing();
-
-        if (socket !== ws) {
-            return;
-        }
-
-        socket = null;
-
-        if (manuallyClosed) {
-            return;
-        }
-
-        /*
-         * Try the next server.
-         */
-        tryServer(index + 1);
-
+        if(socket!==ws)return;
+        socket=null;
+        connecting=false;
+        if(manuallyClosed)return;
+        tryServer(index+1);
     };
 }
 
-
-/*
- * ============================================================
- * WebSocket sending
- * ============================================================
- */
-
-function sendWS(data) {
-
-    if (
-        !socket ||
-        socket.readyState !== WebSocket.OPEN
-    ) {
-        console.error(
-            "WebSocket is not connected."
-        );
-
-        setConnectionStatus(
-            "Disconnected"
-        );
-
+function sendWS(data){
+    if(!socket||socket.readyState!==WebSocket.OPEN){
+        setConnectionStatus("Disconnected");
         return false;
     }
-
-    socket.send(
-        JSON.stringify(data)
-    );
-
+    socket.send(JSON.stringify(data));
     return true;
 }
 
-
-/*
- * ============================================================
- * Ping / keepalive
- * ============================================================
- */
-
-function startPing() {
-
+function startPing(){
     stopPing();
-
-    pingTimer = setInterval(() => {
-
-        if (
-            socket &&
-            socket.readyState === WebSocket.OPEN
-        ) {
-            sendWS({
-                type: "ping"
-            });
-        }
-
-    }, 20000);
+    pingTimer=setInterval(()=>{
+        if(socket&&socket.readyState===WebSocket.OPEN)sendWS({type:"ping"});
+    },20000);
 }
 
-
-function stopPing() {
-
-    if (pingTimer) {
+function stopPing(){
+    if(pingTimer){
         clearInterval(pingTimer);
-        pingTimer = null;
+        pingTimer=null;
     }
 }
 
-
-/*
- * ============================================================
- * WebSocket message handling
- * ============================================================
- */
-
-function handleWebSocketMessage(event) {
-
+function handleMessage(event){
     let data;
+    try{data=JSON.parse(event.data)}catch(e){return}
 
-    try {
-
-        data = JSON.parse(
-            event.data
-        );
-
-    } catch (error) {
-
-        console.error(
-            "Invalid WebSocket message:",
-            event.data
-        );
-
-        return;
-    }
-
-
-    switch (data.type) {
-
-        case "login":
-
-            handleLoginResponse(data);
-
-            break;
-
-
-        case "register":
-
-            handleRegisterResponse(data);
-
-            break;
-
-
-        case "connected":
-
-            handleConnected(data);
-
-            break;
-
-
-        case "message":
-
-            addMessage(data);
-
-            break;
-
-
-        case "users":
-
-            renderUsers(
-                data.users || []
-            );
-
-            break;
-
-
-        case "room":
-
-            handleRoom(data);
-
-            break;
-
-
-        case "new_room":
-
-            handleNewRoom(data);
-
-            break;
-
-
-        case "command":
-
-            handleCommand(data);
-
-            break;
-
-
-        case "refresh":
-
-            refreshCurrentRoom();
-
-            break;
-
-
-        case "pong":
-
-            break;
-
-
-        case "error":
-
-            console.error(
-                "Server error:",
-                data.message
-            );
-
-            alert(
-                data.message || "Server error"
-            );
-
-            break;
-
-
-        default:
-
-            console.warn(
-                "Unknown server message:",
-                data
-            );
-
-            break;
+    switch(data.type){
+        case "login":handleLogin(data);break;
+        case "token_login":handleTokenLogin(data);break;
+        case "register":handleRegister(data);break;
+        case "connected":handleConnected(data);break;
+        case "message":addMessage(data.message||data);break;
+        case "users":renderUsers(data.users||[]);break;
+        case "room":handleRoom(data);break;
+        case "new_room":handleNewRoom(data);break;
+        case "command":handleCommand(data);break;
+        case "refresh":refreshCurrentRoom();break;
+        case "logout":cleanupLocalLogin();break;
+        case "pong":break;
+        case "error":handleError(data.message);break;
     }
 }
 
+function login(){
+    const user=$("loginUsername").value.trim();
+    const password=$("loginPassword").value;
 
-/*
- * ============================================================
- * Login
- * ============================================================
- */
-
-function login() {
-
-    const user =
-        document.getElementById(
-            "loginUsername"
-        ).value.trim();
-
-    const password =
-        document.getElementById(
-            "loginPassword"
-        ).value;
-
-
-    if (!user || !password) {
-
-        document.getElementById(
-            "loginMessage"
-        ).textContent =
-            "Enter a username and password.";
-
+    if(!user||!password){
+        $("loginMessage").textContent="Enter a username and password.";
         return;
     }
 
-
-    if (
-        !socket ||
-        socket.readyState !== WebSocket.OPEN
-    ) {
-        document.getElementById(
-            "loginMessage"
-        ).textContent =
-            "Not connected to the server.";
-
-        return;
-    }
-
-
-    sendWS({
-        type: "login",
-        username: user,
-        password: password
-    });
+    if(!sendWS({type:"login",username:user,password}))$("loginMessage").textContent="Not connected to the server.";
 }
 
-
-/*
- * ============================================================
- * Register
- * ============================================================
- */
-
-function register() {
-
-    const user =
-        document.getElementById(
-            "registerUsername"
-        ).value.trim();
-
-    const password =
-        document.getElementById(
-            "registerPassword"
-        ).value;
-
-
-    if (!user || !password) {
-
-        document.getElementById(
-            "registerMessage"
-        ).textContent =
-            "Enter a username and password.";
-
+function handleLogin(data){
+    if(data.status==="ok"){
+        username=data.username||data.user||"";
+        if(data.token)localStorage.setItem("chat_token",data.token);
+        if(username)localStorage.setItem("chat_user",username);
         return;
     }
 
-
-    sendWS({
-        type: "register",
-        username: user,
-        password: password
-    });
+    const messages={fail:"Invalid username or password.",banned:"You are banned.",ip_banned:"Your IP is banned."};
+    $("loginMessage").textContent=messages[data.status]||"Login failed.";
 }
 
-
-function handleLoginResponse(data) {
-
-    if (
-        data.status_code &&
-        data.status_code !== 200
-    ) {
-
-        document.getElementById(
-            "loginMessage"
-        ).textContent =
-            data.message || "Login failed.";
-
+function handleTokenLogin(data){
+    if(data.status==="ok"){
+        username=data.username||data.user||localStorage.getItem("chat_user")||"";
+        if(data.token)localStorage.setItem("chat_token",data.token);
         return;
     }
 
-
-    if (data.success === false) {
-
-        document.getElementById(
-            "loginMessage"
-        ).textContent =
-            data.message || "Login failed.";
-
-        return;
-    }
-
-
-    /*
-     * The backend should send the authentication token
-     * after successful login.
-     */
-    if (data.token) {
-
-        localStorage.setItem(
-            "chat_token",
-            data.token
-        );
-
-    }
-
-
-    if (data.username) {
-        username = data.username;
-        localStorage.setItem(
-            "chat_user",
-            username
-        );
-    }
-
-}
-
-
-function handleRegisterResponse(data) {
-
-    if (
-        data.status_code &&
-        data.status_code !== 200
-    ) {
-
-        document.getElementById(
-            "registerMessage"
-        ).textContent =
-            data.message || "Registration failed.";
-
-        return;
-    }
-
-
-    if (data.success === false) {
-
-        document.getElementById(
-            "registerMessage"
-        ).textContent =
-            data.message || "Registration failed.";
-
-        return;
-    }
-
-
-    document.getElementById(
-        "registerMessage"
-    ).textContent =
-        data.message || "Account created.";
-
+    localStorage.removeItem("chat_token");
+    localStorage.removeItem("chat_user");
+    username="";
+    isAdmin=false;
     showLogin();
+    $("loginMessage").textContent="Your login session expired. Please log in again.";
 }
 
+function register(){
+    const user=$("registerUsername").value.trim();
+    const password=$("registerPassword").value;
 
-/*
- * ============================================================
- * Connected
- * ============================================================
- */
-
-function handleConnected(data) {
-
-    if (data.username) {
-
-        username =
-            data.username;
-
-        localStorage.setItem(
-            "chat_user",
-            username
-        );
+    if(!user||!password){
+        $("registerMessage").textContent="Enter a username and password.";
+        return;
     }
 
+    if(!sendWS({type:"register",username:user,password}))$("registerMessage").textContent="Not connected to the server.";
+}
 
-    if (data.token) {
+function handleRegister(data){
+    const messages={exists:"That username already exists.",invalid:"Enter a username and password.",invalid_characters:"Username cannot contain ':'."};
 
-        localStorage.setItem(
-            "chat_token",
-            data.token
-        );
+    if(data.status==="ok"){
+        $("registerMessage").textContent="Account created.";
+        setTimeout(showLogin,500);
+        return;
     }
 
+    $("registerMessage").textContent=messages[data.status]||"Registration failed.";
+}
 
-    if (data.room) {
-        room = data.room;
-    }
+function handleConnected(data){
+    username=data.username||data.user||localStorage.getItem("chat_user")||"";
+    room=data.room||"public";
+    isAdmin=!!data.is_admin;
 
-
-    if (data.is_admin !== undefined) {
-        isAdmin = data.is_admin;
-    }
-
+    if(data.token)localStorage.setItem("chat_token",data.token);
+    if(username)localStorage.setItem("chat_user",username);
 
     showChat();
 
+    if(Array.isArray(data.messages))renderMessages(data.messages);
+    if(Array.isArray(data.users))renderUsers(data.users);
 
-    /*
-     * Some versions of the backend send the initial
-     * room messages/users with connected.
-     */
-    if (data.messages) {
-        renderMessages(
-            data.messages
-        );
-    }
-
-    if (data.users) {
-        renderUsers(
-            data.users
-        );
-    }
+    if(!data.is_admin)checkAdmin();
 }
 
-
-/*
- * ============================================================
- * Logout
- * ============================================================
- */
-
-function logout() {
-
-    manuallyClosed = true;
-
+function logout(){
+    manuallyClosed=true;
+    clearTimeout(reconnectTimer);
     stopPing();
 
-    clearTimeout(reconnectTimer);
-
-
-    if (
-        socket &&
-        socket.readyState === WebSocket.OPEN
-    ) {
-
-        sendWS({
-            type: "logout"
-        });
-
-        /*
-         * Give the logout message a moment to leave
-         * before closing the connection.
-         */
-        setTimeout(() => {
-
-            if (socket) {
-                socket.close();
-            }
-
-        }, 100);
-
-    } else {
-
+    if(socket&&socket.readyState===WebSocket.OPEN){
+        sendWS({type:"logout"});
+        setTimeout(()=>{
+            if(socket)socket.close();
+            cleanupLocalLogin();
+        },100);
+    }else{
         cleanupLocalLogin();
-
     }
 }
 
-
-function cleanupLocalLogin() {
-
-    localStorage.removeItem(
-        "chat_token"
-    );
-
-    localStorage.removeItem(
-        "chat_user"
-    );
-
-    username = "";
-    isAdmin = false;
-    room = "public";
-
+function cleanupLocalLogin(){
+    localStorage.removeItem("chat_token");
+    localStorage.removeItem("chat_user");
+    username="";
+    room="public";
+    isAdmin=false;
     showLogin();
+    $("loginMessage").textContent="";
+    $("registerMessage").textContent="";
 }
 
+function send(){
+    const input=$("messageInput");
+    const message=input.value.trim();
 
-/*
- * ============================================================
- * Commands
- * ============================================================
- */
+    if(!message)return;
 
-function sendCommand(command) {
-
-    return sendWS({
-        type: "command",
-        command: command
-    });
-}
-
-
-function handleCommand(data) {
-
-    if (
-        data.role !== undefined
-    ) {
-
-        isAdmin =
-            data.role === "admin" ||
-            data.role === "administrator" ||
-            data.role === true;
-
-        if (isAdmin) {
-            document.getElementById(
-                "adminControls"
-            ).style.display = "block";
-        }
-
-        return;
+    if(message.startsWith("/")){
+        sendWS({type:"command",command:message});
+    }else{
+        sendWS({type:"send",room,message});
     }
 
-
-    if (data.message) {
-
-        /*
-         * Don't automatically alert every successful
-         * command because commands such as delete/mute
-         * may already have visible effects.
-         */
-        if (
-            data.status_code &&
-            data.status_code >= 400
-        ) {
-            alert(data.message);
-        }
-    }
-}
-
-
-/*
- * ============================================================
- * Admin role
- * ============================================================
- */
-
-function checkAdmin() {
-
-    sendCommand(
-        "/checkrole"
-    );
-}
-
-
-/*
- * ============================================================
- * Sending messages
- * ============================================================
- */
-
-function send() {
-
-    const input =
-        document.getElementById(
-            "messageInput"
-        );
-
-    const message =
-        input.value.trim();
-
-
-    if (!message) {
-        return;
-    }
-
-
-    if (
-        !socket ||
-        socket.readyState !== WebSocket.OPEN
-    ) {
-        alert(
-            "Not connected to the server."
-        );
-
-        return;
-    }
-
-
-    /*
-     * Slash commands go through the same WebSocket.
-     */
-    if (message.startsWith("/")) {
-
-        sendCommand(message);
-
-    } else {
-
-        sendWS({
-            type: "send",
-            room: room,
-            message: message
-        });
-
-    }
-
-
-    input.value = "";
+    input.value="";
     input.focus();
 }
 
-
-/*
- * Allow Enter to send.
- */
-
-document
-    .getElementById("messageInput")
-    .addEventListener(
-        "keydown",
-        function(event) {
-
-            if (event.key === "Enter") {
-
-                event.preventDefault();
-
-                send();
-            }
-
-        }
-    );
-
-
-/*
- * ============================================================
- * Messages
- * ============================================================
- */
-
-function renderMessages(messages) {
-
-    const container =
-        document.getElementById(
-            "messages"
-        );
-
-    container.innerHTML = "";
-
-
-    for (const message of messages) {
-        addMessage(message);
-    }
-
-
-    container.scrollTop =
-        container.scrollHeight;
+function sendCommand(command){
+    return sendWS({type:"command",command});
 }
 
+function checkAdmin(){
+    sendCommand("/checkrole");
+}
 
-function addMessage(data) {
+function handleCommand(data){
+    if(data.role!==undefined){
+        isAdmin=data.role==="admin";
+        $("adminControls").style.display=isAdmin?"block":"none";
+        if(isAdmin)refreshCurrentRoom();
+        return;
+    }
 
-    const container =
-        document.getElementById(
-            "messages"
-        );
+    if(data.status_code>=400)handleError(data.message||"Command failed.");
+}
 
+function handleError(message){
+    const messages={muted:"You are muted.",rate:"You are sending messages too quickly.",banned:"You are banned.",ip_banned:"Your IP is banned.","Not logged in":"Your login session is no longer valid."};
+    const text=messages[message]||message||"Server error";
 
-    const div =
-        document.createElement(
-            "div"
-        );
+    if(message==="Not logged in"){
+        localStorage.removeItem("chat_token");
+        localStorage.removeItem("chat_user");
+        username="";
+        isAdmin=false;
+        showLogin();
+    }
 
-    div.className =
-        "message";
+    alert(text);
+}
 
+function renderMessages(messages){
+    const container=$("messages");
+    container.innerHTML="";
+    messages.forEach(addMessage);
+    container.scrollTop=container.scrollHeight;
+}
 
-    /*
-     * The backend's normal message format is:
-     *
-     * [HH:MM:SS]|username: message
-     */
-    div.textContent =
-        data.text || "";
+function addMessage(data){
+    if(!data)return;
 
+    const message=data.text||"";
+    if(!message)return;
 
-    if (
-        document.getElementById(
-            "showIDsCheckbox"
-        ).checked &&
-        data.id
-    ) {
+    const div=document.createElement("div");
+    div.className="message";
+    div.textContent=message;
 
-        const id =
-            document.createElement(
-                "span"
-            );
-
-        id.className =
-            "message-id";
-
-        id.textContent =
-            "ID: " + data.id;
-
+    if($("showIDsCheckbox").checked&&data.id){
+        const id=document.createElement("span");
+        id.className="message-id";
+        id.textContent="ID: "+data.id;
         div.appendChild(id);
     }
 
-
-    if (
-        document.getElementById(
-            "showDeleteCheckbox"
-        ).checked &&
-        data.id &&
-        isAdmin
-    ) {
-
-        const deleteButton =
-            document.createElement(
-                "button"
-            );
-
-        deleteButton.className =
-            "delete-button danger";
-
-        deleteButton.textContent =
-            "Delete";
-
-        deleteButton.onclick =
-            () => deleteMsg(data.id);
-
-        div.appendChild(
-            deleteButton
-        );
+    if($("showDeleteCheckbox").checked&&data.id&&isAdmin){
+        const button=document.createElement("button");
+        button.className="delete-button danger";
+        button.textContent="Delete";
+        button.onclick=()=>deleteMsg(data.id);
+        div.appendChild(button);
     }
 
-
-    container.appendChild(
-        div
-    );
-
-    container.scrollTop =
-        container.scrollHeight;
+    $("messages").appendChild(div);
+    $("messages").scrollTop=$("messages").scrollHeight;
 }
 
-
-/*
- * ============================================================
- * Delete message
- * ============================================================
- */
-
-function deleteMsg(id) {
-
-    if (!id) {
-        return;
-    }
-
-    sendCommand(
-        "/delete " + id
-    );
+function deleteMsg(id){
+    if(id)sendCommand("/delete "+id);
 }
 
+function switchRoom(roomName){
+    roomName=String(roomName||"").trim();
+    if(roomName)sendWS({type:"join",room:roomName});
+}
 
-/*
- * ============================================================
- * Rooms
- * ============================================================
- */
+function switchRoomFromInput(){
+    switchRoom($("roomInput").value);
+}
 
-function switchRoom(roomName) {
+function handleRoom(data){
+    if(data.room)room=data.room;
+    $("roomLabel").textContent="Room: "+room;
+    renderMessages(data.messages||[]);
+}
 
-    roomName =
-        String(roomName || "")
-            .trim();
+function refreshCurrentRoom(){
+    if(socket&&socket.readyState===WebSocket.OPEN)sendWS({type:"join",room});
+}
 
+function newRoom(){
+    sendWS({type:"new_room"});
+}
 
-    if (!roomName) {
-        return;
-    }
+function handleNewRoom(data){
+    if(data.room)room=data.room;
+    $("roomLabel").textContent="Room: "+room;
+    renderMessages(data.messages||[]);
+}
 
-
-    sendWS({
-        type: "join",
-        room: roomName
+function renderUsers(users){
+    const list=$("onlineUsers");
+    list.innerHTML="";
+    users.forEach(user=>{
+        const li=document.createElement("li");
+        li.textContent=user;
+        list.appendChild(li);
     });
 }
 
-
-function switchRoomFromInput() {
-
-    const input =
-        document.getElementById(
-            "roomInput"
-        );
-
-    const roomName =
-        input.value.trim();
-
-    if (!roomName) {
-        return;
+$("messageInput").addEventListener("keydown",e=>{
+    if(e.key==="Enter"){
+        e.preventDefault();
+        send();
     }
+});
 
-    switchRoom(roomName);
-}
-
-
-function handleRoom(data) {
-
-    if (data.room) {
-
-        room =
-            data.room;
-
-        document.getElementById(
-            "roomLabel"
-        ).textContent =
-            "Room: " + room;
-    }
-
-
-    if (data.messages) {
-
-        renderMessages(
-            data.messages
-        );
-
-    } else {
-
-        /*
-         * If the backend only tells us the room,
-         * request it again through the WebSocket.
-         */
-        refreshCurrentRoom();
-    }
-}
-
-
-function refreshCurrentRoom() {
-
-    if (
-        !socket ||
-        socket.readyState !== WebSocket.OPEN
-    ) {
-        return;
-    }
-
-
-    sendWS({
-        type: "join",
-        room: room
-    });
-}
-
-
-function newRoom() {
-
-    sendWS({
-        type: "new_room"
-    });
-}
-
-
-function handleNewRoom(data) {
-
-    if (data.room) {
-
-        room =
-            data.room;
-
-        document.getElementById(
-            "roomLabel"
-        ).textContent =
-            "Room: " + room;
-    }
-
-
-    if (data.messages) {
-
-        renderMessages(
-            data.messages
-        );
-    }
-}
-
-
-/*
- * ============================================================
- * Online users
- * ============================================================
- */
-
-function renderUsers(users) {
-
-    const list =
-        document.getElementById(
-            "onlineUsers"
-        );
-
-    list.innerHTML = "";
-
-
-    for (const user of users) {
-
-        const li =
-            document.createElement(
-                "li"
-            );
-
-        li.textContent =
-            user;
-
-        list.appendChild(
-            li
-        );
-    }
-}
-
-
-/*
- * ============================================================
- * Page startup
- * ============================================================
- */
-
-window.addEventListener(
-    "load",
-    function() {
-
-        /*
-         * Start the WebSocket connection immediately.
-         *
-         * If a token exists, connect() will send
-         * token_login after the socket opens.
-         */
-        connect();
-
-    }
-);
-
+window.addEventListener("load",()=>{
+    loadLayout();
+    connect();
+});
 </script>
-
 </body>
 </html>
