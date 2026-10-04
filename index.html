@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<link id="favicon" rel="icon" type="image/png" href="favicon.png">
 <title>Chatroom</title>
 
 <style>
@@ -559,6 +560,34 @@ let reconnectTimer=null;
 let pingTimer=null;
 let manuallyClosed=false;
 let connecting=false;
+
+let unreadMessages=0;
+
+function setFaviconNotification(enabled){
+    $("favicon").href=
+        enabled
+        ?"favicon-notification.png"
+        :"favicon.png";
+}
+
+function clearMessageNotification(){
+    unreadMessages=0;
+    setFaviconNotification(false);
+}
+
+function isChatAtBottom(){
+    const messages=$("messages");
+
+    return messages.scrollHeight-
+        messages.scrollTop-
+        messages.clientHeight<=10;
+}
+
+function checkMessagePosition(){
+    if(isChatAtBottom()){
+        clearMessageNotification();
+    }
+}
 
 function $(id){
     return document.getElementById(id);
@@ -1309,10 +1338,11 @@ function renderMessages(messages){
 
     container.scrollTop=
         container.scrollHeight;
+    clearMessageNotification();
 }
 
 function addMessage(data){
-
+    const wasAtBottom=isChatAtBottom();
     if(!data)return;
 
     let message=
@@ -1393,8 +1423,15 @@ function addMessage(data){
         div
     );
 
+    if(wasAtBottom){
     $("messages").scrollTop=
         $("messages").scrollHeight;
+
+    clearMessageNotification();
+    }else{
+    unreadMessages++;
+    setFaviconNotification(true);
+    }
 }
 
 function deleteMsg(id){
@@ -1514,6 +1551,19 @@ $("messageInput").addEventListener(
             e.preventDefault();
 
             send();
+        }
+    }
+);
+$("messages").addEventListener(
+    "scroll",
+    checkMessagePosition
+);
+document.addEventListener(
+    "visibilitychange",
+    ()=>{
+        if(!document.hidden){
+            clearMessageNotification();
+            checkMessagePosition();
         }
     }
 );
