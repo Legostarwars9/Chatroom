@@ -3,29 +3,121 @@
 <head>
 <meta charset="UTF-8">
 <title>Website Chat</title>
+
 <style>
-body {margin:0; background:#1e2128; color:#e6e6e6; font-family:Arial;}
-#container {display:flex; height:100vh;}
-#chatArea {flex:1; padding:15px;}
-#sidebar {width:180px; background:#14161c; border-left:1px solid #3a3f4a; padding:10px;}
-h2 {color:#7aa2f7; margin-top:0;}
-input, button {background:#2a2f3a; color:#fff; border:1px solid #3a3f4a; padding:5px; margin:2px;}
-button:hover {background:#3a3f4a; cursor:pointer;}
-#chatBox {height:65vh; background:#111; border:1px solid #3a3f4a; overflow-y:auto; padding:6px; white-space:pre-wrap;}
-.user {padding:2px; font-size:14px;}
-.message {margin-bottom:4px;}
-.timestamp {color:#888; font-size:12px;}
-.username {color:#7aa2f7; font-weight:bold;}
-.msgid {color:#555; font-size:10px; margin-left:5px; cursor:help;}
-.deleteBtn {color:#f55; background:none; border:none; cursor:pointer; margin-left:5px;}
-#statusPopup {position:fixed; right:16px; bottom:16px; max-width:300px; padding:8px 10px; background:#2a2f3a; color:#e6e6e6; border:1px solid #3a3f4a; border-radius:6px; font-size:12px; opacity:0; transform:translateY(6px); transition:opacity 0.2s ease, transform 0.2s ease; pointer-events:none; white-space:pre-wrap; z-index:1000;}
-#statusPopup.show {opacity:1; transform:translateY(0);}
+body {
+    margin: 0;
+    background: #1e2128;
+    color: #e6e6e6;
+    font-family: Arial;
+}
+
+#container {
+    display: flex;
+    height: 100vh;
+}
+
+#chatArea {
+    flex: 1;
+    padding: 15px;
+}
+
+#sidebar {
+    width: 180px;
+    background: #14161c;
+    border-left: 1px solid #3a3f4a;
+    padding: 10px;
+}
+
+h2 {
+    color: #7aa2f7;
+    margin-top: 0;
+}
+
+input, button {
+    background: #2a2f3a;
+    color: #fff;
+    border: 1px solid #3a3f4a;
+    padding: 5px;
+    margin: 2px;
+}
+
+button:hover {
+    background: #3a3f4a;
+    cursor: pointer;
+}
+
+#chatBox {
+    height: 65vh;
+    background: #111;
+    border: 1px solid #3a3f4a;
+    overflow-y: auto;
+    padding: 6px;
+    white-space: pre-wrap;
+}
+
+.user {
+    padding: 2px;
+    font-size: 14px;
+}
+
+.message {
+    margin-bottom: 4px;
+}
+
+.timestamp {
+    color: #888;
+    font-size: 12px;
+}
+
+.username {
+    color: #7aa2f7;
+    font-weight: bold;
+}
+
+.msgid {
+    color: #555;
+    font-size: 10px;
+    margin-left: 5px;
+}
+
+.deleteBtn {
+    color: #f55;
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-left: 5px;
+}
+
+#statusPopup {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    max-width: 300px;
+    padding: 8px 10px;
+    background: #2a2f3a;
+    color: #e6e6e6;
+    border: 1px solid #3a3f4a;
+    border-radius: 6px;
+    font-size: 12px;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+    white-space: pre-wrap;
+    z-index: 1000;
+}
+
+#statusPopup.show {
+    opacity: 1;
+    transform: translateY(0);
+}
 </style>
 </head>
 
 <body>
 
-<div id="statusPopup" role="status" aria-live="polite"></div>
+<div id="statusPopup"></div>
 
 <div id="container">
 
@@ -34,110 +126,166 @@ button:hover {background:#3a3f4a; cursor:pointer;}
 <h2>Website Chat</h2>
 
 <div id="login">
+
     <input id="username" placeholder="Username">
-    <input id="password" type="password" placeholder="Password">
-    <button id="loginBtn" onclick="login()">Login</button>
-    <button id="registerBtn" onclick="register()">Create Account</button>
-    <div id="error" style="color:#ff5555; margin-top:5px;"></div>
+
+    <input
+        id="password"
+        type="password"
+        placeholder="Password"
+    >
+
+    <button onclick="login()">Login</button>
+
+    <button onclick="register()">Create Account</button>
+
+    <div
+        id="error"
+        style="color:#ff5555; margin-top:5px;"
+    ></div>
+
 </div>
 
 <div id="chat" style="display:none;">
 
     <div>
-        <button onclick="switchRoom('public')">Public</button>
-        <button onclick="newRoom()">New Room</button>
 
-        <input id="roomCode" placeholder="Enter Room Code" style="width:120px; margin-left:5px;">
+        <button onclick="switchRoom('public')">
+            Public
+        </button>
 
-        <button onclick="joinRoom()">Join</button>
+        <button onclick="newRoom()">
+            New Room
+        </button>
+
+        <input
+            id="roomCode"
+            placeholder="Enter Room Code"
+            style="width:120px;"
+        >
+
+        <button onclick="joinRoom()">
+            Join
+        </button>
 
         <span id="roomLabel"></span>
 
-        <label id="showIDsLabel" style="margin-left:10px; display:none;">
-            <input type="checkbox" id="showIDs">
+        <label
+            id="showIDsLabel"
+            style="margin-left:10px; display:none;"
+        >
+            <input
+                type="checkbox"
+                id="showIDs"
+            >
             Show Message IDs
         </label>
 
-        <label id="showDeleteLabel" style="margin-left:10px; display:none;">
-            <input type="checkbox" id="showDelete">
+        <label
+            id="showDeleteLabel"
+            style="margin-left:10px; display:none;"
+        >
+            <input
+                type="checkbox"
+                id="showDelete"
+            >
             Show Quick Delete Buttons
         </label>
+
     </div>
 
     <div id="chatBox"></div>
 
-    <input id="message" style="width:70%" placeholder="Message or command" maxlength="1000">
+    <input
+        id="message"
+        style="width:70%"
+        placeholder="Message or command"
+        maxlength="1000"
+    >
 
-    <button id="sendBtn" onclick="send()">Send</button>
-    <button id="logoutBtn" onclick="logout()">Logout</button>
+    <button onclick="send()">
+        Send
+    </button>
+
+    <button onclick="logout()">
+        Logout
+    </button>
 
 </div>
 
 </div>
 
 <div id="sidebar">
+
     <b>Online Users</b>
+
     <div id="userList"></div>
+
 </div>
 
 </div>
 
 <script>
 
-const API_URL = "https://chat.legostarwars9.com";
-
 const WS_URL =
-    API_URL.replace(/^https:/, "wss:")
-           .replace(/^http:/, "ws:")
-    + "/ws";
-
-let user = "";
-let room = "public";
-let isAdmin = false;
+    "wss://chat.legostarwars9.com/ws";
 
 let socket = null;
-let wsPingInterval = null;
-let reconnectTimeout = null;
+let username = "";
+let room = "public";
+let isAdmin = false;
+let pingTimer = null;
+let reconnectTimer = null;
+let intentionalClose = false;
 
-const usernameInput = document.getElementById("username");
-const passwordInput = document.getElementById("password");
-const loginDiv = document.getElementById("login");
-const chatDiv = document.getElementById("chat");
-const errorDiv = document.getElementById("error");
-const chatBox = document.getElementById("chatBox");
-const messageInput = document.getElementById("message");
-const userList = document.getElementById("userList");
-const roomLabel = document.getElementById("roomLabel");
-const showIDsCheckbox = document.getElementById("showIDs");
-const showIDsLabel = document.getElementById("showIDsLabel");
-const showDeleteCheckbox = document.getElementById("showDelete");
-const showDeleteLabel = document.getElementById("showDeleteLabel");
-const statusPopup = document.getElementById("statusPopup");
 
-const fetchOptions = (method, body = null) => {
+const loginDiv =
+    document.getElementById("login");
 
-    const opts = {
-        method: method,
-        credentials: "include"
-    };
+const chatDiv =
+    document.getElementById("chat");
 
-    if (body !== null) {
-        opts.headers = {
-            "Content-Type": "application/json"
-        };
+const usernameInput =
+    document.getElementById("username");
 
-        opts.body = JSON.stringify(body);
-    }
+const passwordInput =
+    document.getElementById("password");
 
-    return opts;
-};
+const errorDiv =
+    document.getElementById("error");
 
-function showStatus(msg) {
+const chatBox =
+    document.getElementById("chatBox");
+
+const messageInput =
+    document.getElementById("message");
+
+const userList =
+    document.getElementById("userList");
+
+const roomLabel =
+    document.getElementById("roomLabel");
+
+const showIDsCheckbox =
+    document.getElementById("showIDs");
+
+const showIDsLabel =
+    document.getElementById("showIDsLabel");
+
+const showDeleteCheckbox =
+    document.getElementById("showDelete");
+
+const showDeleteLabel =
+    document.getElementById("showDeleteLabel");
+
+const statusPopup =
+    document.getElementById("statusPopup");
+
+
+function showStatus(message) {
 
     statusPopup.textContent =
-        typeof msg === "object"
-            ? JSON.stringify(msg)
-            : msg;
+        message;
 
     statusPopup.classList.add("show");
 
@@ -146,149 +294,10 @@ function showStatus(msg) {
     }, 3000);
 }
 
-window.onload = function() {
 
-    fetch(`${API_URL}/whoami`, fetchOptions("GET"))
-    .then(r => r.json())
-    .then(d => {
+function connect() {
 
-        if (d.user) {
-            user = d.user;
-            showChat();
-        }
-
-    })
-    .catch(() => {
-        console.log("Not logged in.");
-    });
-};
-
-function login() {
-
-    const username = usernameInput.value.trim();
-    const password = passwordInput.value.trim();
-
-    if (!username || !password) {
-        errorDiv.textContent = "Enter username and password";
-        return;
-    }
-
-    fetch(
-        `${API_URL}/login`,
-        fetchOptions(
-            "POST",
-            {
-                username: username,
-                password: password
-            }
-        )
-    )
-    .then(r => {
-
-        if (!r.ok) {
-            throw new Error("Login rejected");
-        }
-
-        return r.json();
-    })
-    .then(d => {
-
-        if (d.status === "ok") {
-            user = d.user || username;
-            showChat();
-        } else {
-            errorDiv.textContent =
-                "Login failed: " + d.status;
-        }
-
-    })
-    .catch(() => {
-        errorDiv.textContent =
-            "Login failed. Check your credentials.";
-    });
-}
-
-function register() {
-
-    const username = usernameInput.value.trim();
-    const password = passwordInput.value.trim();
-
-    if (!username || !password) {
-        errorDiv.textContent =
-            "Enter username/password";
-        return;
-    }
-
-    fetch(
-        `${API_URL}/register`,
-        fetchOptions(
-            "POST",
-            {
-                username: username,
-                password: password
-            }
-        )
-    )
-    .then(r => {
-
-        if (r.status === 409) {
-            errorDiv.textContent = "Username exists";
-        } else if (r.status === 410) {
-            errorDiv.textContent = "Invalid characters";
-        } else if (r.ok) {
-            errorDiv.textContent = "Account created!";
-        } else {
-            errorDiv.textContent = "Registration failed";
-        }
-
-    });
-}
-
-function logout() {
-
-    stopWebSocket();
-
-    fetch(`${API_URL}/logout`, fetchOptions("GET"))
-    .then(() => {
-        location.reload();
-    });
-}
-
-function showChat() {
-
-    loginDiv.style.display = "none";
-    chatDiv.style.display = "block";
-
-    checkAdmin();
-    connectWebSocket();
-}
-
-function checkAdmin() {
-
-    fetch(
-        `${API_URL}/command`,
-        fetchOptions(
-            "POST",
-            {
-                cmd: "/checkrole"
-            }
-        )
-    )
-    .then(r => r.json())
-    .then(d => {
-
-        if (d.role === "admin") {
-
-            isAdmin = true;
-
-            showIDsLabel.style.display = "inline";
-            showDeleteLabel.style.display = "inline";
-        }
-
-    });
-}
-
-function connectWebSocket() {
+    intentionalClose = false;
 
     if (
         socket &&
@@ -300,36 +309,70 @@ function connectWebSocket() {
         return;
     }
 
-    console.log("Connecting WebSocket:", WS_URL);
 
-    socket = new WebSocket(WS_URL);
+    socket = new WebSocket(
+        WS_URL
+    );
+
 
     socket.onopen = function() {
 
-        console.log("WebSocket connected");
+        console.log(
+            "WebSocket connected"
+        );
 
-        showStatus("Connected to chat");
+        startPing();
 
-        startWebSocketPing();
+        const savedToken =
+            localStorage.getItem(
+                "chat_token"
+            );
+
+        const savedUser =
+            localStorage.getItem(
+                "chat_user"
+            );
+
+
+        if (
+            savedToken &&
+            savedUser
+        ) {
+
+            socket.send(
+                JSON.stringify({
+                    type: "token_login",
+                    token: savedToken
+                })
+            );
+
+        }
     };
+
 
     socket.onmessage = function(event) {
 
+        let data;
+
         try {
 
-            const data = JSON.parse(event.data);
+            data =
+                JSON.parse(event.data);
 
-            handleWebSocketMessage(data);
-
-        } catch (err) {
+        } catch {
 
             console.error(
-                "Invalid WebSocket data:",
-                event.data,
-                err
+                "Invalid WebSocket message:",
+                event.data
             );
+
+            return;
         }
+
+
+        handleMessage(data);
     };
+
 
     socket.onerror = function(error) {
 
@@ -339,415 +382,459 @@ function connectWebSocket() {
         );
     };
 
-    socket.onclose = function(event) {
 
-        console.log(
-            "WebSocket closed:",
-            event.code,
-            event.reason
-        );
+    socket.onclose = function() {
 
-        stopWebSocketPing();
+        stopPing();
 
         socket = null;
 
-        if (chatDiv.style.display === "none") {
+        if (intentionalClose) {
             return;
         }
 
-        showStatus(
-            "Chat connection lost. Reconnecting..."
-        );
-
-        clearTimeout(reconnectTimeout);
-
-        reconnectTimeout = setTimeout(() => {
-
-            if (chatDiv.style.display !== "none") {
-                connectWebSocket();
-            }
-
-        }, 3000);
-    };
-}
-
-function stopWebSocket() {
-
-    clearTimeout(reconnectTimeout);
-
-    reconnectTimeout = null;
-
-    stopWebSocketPing();
-
-    if (socket) {
-
-        socket.onclose = null;
-        socket.close();
-        socket = null;
-    }
-}
-
-function startWebSocketPing() {
-
-    stopWebSocketPing();
-
-    wsPingInterval = setInterval(() => {
 
         if (
-            socket &&
-            socket.readyState === WebSocket.OPEN
+            loginDiv.style.display === "none"
         ) {
 
-            socket.send(
-                JSON.stringify({
-                    type: "ping"
-                })
+            showStatus(
+                "Connection lost. Reconnecting..."
             );
         }
 
-    }, 10000);
+
+        clearTimeout(
+            reconnectTimer
+        );
+
+
+        reconnectTimer =
+            setTimeout(
+                connect,
+                3000
+            );
+    };
 }
 
-function stopWebSocketPing() {
 
-    if (wsPingInterval) {
+function handleMessage(data) {
 
-        clearInterval(wsPingInterval);
-        wsPingInterval = null;
-    }
-}
+    if (data.type === "login") {
 
-function handleWebSocketMessage(data) {
+        if (data.status === "ok") {
 
-    if (data.type === "connected") {
+            username =
+                data.user;
 
-        user = data.user || user;
-        room = data.room || "public";
+            localStorage.setItem(
+                "chat_token",
+                data.token
+            );
 
-        renderMessages(data.messages || []);
-        renderUsers(data.users || []);
+            localStorage.setItem(
+                "chat_user",
+                username
+            );
 
-        chatBox.scrollTop = chatBox.scrollHeight;
+            showChat();
+
+        } else {
+
+            errorDiv.textContent =
+                data.status === "banned"
+                    ? "You are banned."
+                    : data.status === "ip_banned"
+                        ? "Your IP is banned."
+                        : "Login failed.";
+        }
 
         return;
     }
 
+
+    if (data.type === "register") {
+
+        if (data.status === "ok") {
+
+            errorDiv.textContent =
+                "Account created!";
+
+        } else if (
+            data.status === "exists"
+        ) {
+
+            errorDiv.textContent =
+                "Username exists";
+
+        } else {
+
+            errorDiv.textContent =
+                "Invalid username/password";
+        }
+
+        return;
+    }
+
+
+    if (data.type === "connected") {
+
+        username =
+            data.user;
+
+        room =
+            data.room || "public";
+
+        renderUsers(
+            data.users || []
+        );
+
+        renderMessages(
+            data.messages || []
+        );
+
+        return;
+    }
+
+
     if (data.type === "message") {
 
-        const wasAtBottom =
+        const atBottom =
             chatBox.scrollTop +
             chatBox.clientHeight >=
             chatBox.scrollHeight - 5;
 
-        appendMessage(data.message);
 
-        if (wasAtBottom) {
-            chatBox.scrollTop = chatBox.scrollHeight;
+        appendMessage(
+            data.message
+        );
+
+
+        if (atBottom) {
+
+            chatBox.scrollTop =
+                chatBox.scrollHeight;
         }
 
         return;
     }
+
 
     if (data.type === "users") {
 
-        renderUsers(data.users || []);
+        renderUsers(
+            data.users || []
+        );
 
         return;
     }
+
 
     if (data.type === "room") {
 
-        room = data.room || "public";
+        room =
+            data.room;
 
-        renderMessages(data.messages || []);
-
-        chatBox.scrollTop = chatBox.scrollHeight;
+        renderMessages(
+            data.messages || []
+        );
 
         return;
     }
+
+
+    if (data.type === "new_room") {
+
+        if (data.status === "ok") {
+
+            switchRoom(
+                data.room
+            );
+        }
+
+        return;
+    }
+
+
+    if (data.type === "command") {
+
+        if (data.status_code === 403) {
+
+            showStatus(
+                "Admin only."
+            );
+
+            return;
+        }
+
+
+        if (data.status_code === 404) {
+
+            showStatus(
+                "User not found."
+            );
+
+            return;
+        }
+
+
+        if (data.message) {
+
+            showStatus(
+                data.message
+            );
+        }
+
+
+        if (data.role) {
+
+            isAdmin =
+                data.role === "admin";
+
+            updateAdminControls();
+        }
+
+        return;
+    }
+
 
     if (data.type === "refresh") {
 
-        requestRoomRefresh();
+        switchRoom(room);
 
         return;
     }
+
 
     if (data.type === "error") {
 
-        showStatus(
-            data.message || "WebSocket error"
+        if (data.message === "muted") {
+
+            showStatus(
+                "You are muted."
+            );
+
+        } else if (
+            data.message === "rate"
+        ) {
+
+            showStatus(
+                "You are sending messages too quickly."
+            );
+
+        } else {
+
+            showStatus(
+                data.message
+            );
+        }
+
+        return;
+    }
+}
+
+
+function login() {
+
+    const user =
+        usernameInput.value.trim();
+
+    const password =
+        passwordInput.value;
+
+    if (!user || !password) {
+
+        errorDiv.textContent =
+            "Enter username and password";
+
+        return;
+    }
+
+
+    ensureConnection(() => {
+
+        socket.send(
+            JSON.stringify({
+                type: "login",
+                username: user,
+                password: password
+            })
         );
 
-        return;
-    }
-
-    if (data.type === "pong") {
-        return;
-    }
-}
-
-function renderUsers(users) {
-
-    userList.innerHTML = users
-        .map(
-            u => `<div class="user">${escapeHTML(u)}</div>`
-        )
-        .join("");
-}
-
-function renderMessages(data) {
-
-    chatBox.innerHTML = "";
-
-    data.forEach(m => {
-        appendMessage(m);
     });
-
-    roomLabel.textContent =
-        room === "public"
-            ? ""
-            : "Room " + room;
 }
 
-function appendMessage(m) {
 
-    if (!m || !m.text) {
+function register() {
+
+    const user =
+        usernameInput.value.trim();
+
+    const password =
+        passwordInput.value;
+
+    if (!user || !password) {
+
+        errorDiv.textContent =
+            "Enter username/password";
+
         return;
     }
 
-    const parts = m.text.split("|");
 
-    if (parts.length < 2) {
+    ensureConnection(() => {
+
+        socket.send(
+            JSON.stringify({
+                type: "register",
+                username: user,
+                password: password
+            })
+        );
+
+    });
+}
+
+
+function ensureConnection(callback) {
+
+    if (
+        socket &&
+        socket.readyState === WebSocket.OPEN
+    ) {
+
+        callback();
         return;
     }
 
-    const timestamp = parts[0];
-    const rest = parts[1];
 
-    const username = rest.split(":")[0];
-
-    const message =
-        rest
-            .split(":")
-            .slice(1)
-            .join(":")
-            .trim();
-
-    const messageDiv =
-        document.createElement("div");
-
-    messageDiv.className = "message";
-
-    const timestampSpan =
-        document.createElement("span");
-
-    timestampSpan.className = "timestamp";
-    timestampSpan.textContent = timestamp;
-
-    const usernameSpan =
-        document.createElement("span");
-
-    usernameSpan.className = "username";
-    usernameSpan.textContent = username + ":";
-
-    messageDiv.appendChild(timestampSpan);
-    messageDiv.appendChild(
-        document.createTextNode(" ")
+    showStatus(
+        "Connecting..."
     );
-    messageDiv.appendChild(usernameSpan);
-    messageDiv.appendChild(
-        document.createTextNode(" " + message)
+
+
+    const oldSocket =
+        socket;
+
+
+    const handler = function() {
+
+        socket.removeEventListener(
+            "open",
+            handler
+        );
+
+        callback();
+    };
+
+
+    if (oldSocket) {
+
+        oldSocket.addEventListener(
+            "open",
+            handler
+        );
+
+    } else {
+
+        connect();
+
+        socket.addEventListener(
+            "open",
+            handler
+        );
+    }
+}
+
+
+function showChat() {
+
+    loginDiv.style.display =
+        "none";
+
+    chatDiv.style.display =
+        "block";
+
+    checkAdmin();
+}
+
+
+function checkAdmin() {
+
+    sendCommand(
+        "/checkrole"
     );
+}
+
+
+function updateAdminControls() {
 
     if (isAdmin) {
 
-        if (showIDsCheckbox.checked) {
+        showIDsLabel.style.display =
+            "inline";
 
-            const idSpan =
-                document.createElement("span");
+        showDeleteLabel.style.display =
+            "inline";
 
-            idSpan.className = "msgid";
-            idSpan.textContent = `[ID: ${m.id}]`;
-            idSpan.title = "Message ID";
+    } else {
 
-            messageDiv.appendChild(
-                document.createTextNode(" ")
-            );
+        showIDsLabel.style.display =
+            "none";
 
-            messageDiv.appendChild(idSpan);
-        }
-
-        if (showDeleteCheckbox.checked) {
-
-            const deleteButton =
-                document.createElement("button");
-
-            deleteButton.className = "deleteBtn";
-            deleteButton.textContent = "X";
-
-            deleteButton.onclick = function() {
-                deleteMsg(m.id);
-            };
-
-            messageDiv.appendChild(deleteButton);
-        }
+        showDeleteLabel.style.display =
+            "none";
     }
 
-    chatBox.appendChild(messageDiv);
+
+    renderMessagesFromDOM();
 }
 
-function escapeHTML(value) {
-
-    const div =
-        document.createElement("div");
-
-    div.textContent = value;
-
-    return div.innerHTML;
-}
 
 function send() {
 
-    const msg = messageInput.value.trim();
+    const message =
+        messageInput.value.trim();
 
-    if (!msg) {
+    if (!message) {
         return;
     }
 
+
     messageInput.value = "";
 
-    const endpoint =
-        msg.startsWith("/")
-            ? "/command"
-            : "/send";
 
-    const payload =
-        msg.startsWith("/")
-            ? {cmd: msg}
-            : {
-                message: msg,
-                room: room
-            };
+    if (message.startsWith("/")) {
 
-    fetch(
-        `${API_URL}${endpoint}`,
-        fetchOptions(
-            "POST",
-            payload
-        )
-    )
-    .then(r => {
-
-        if (msg.startsWith("/")) {
-
-            if (r.status === 403) {
-                showStatus("Admin only.");
-                return;
-            }
-
-            if (r.status === 404) {
-                showStatus("User not found.");
-                return;
-            }
-
-            return r.json()
-                .then(res => {
-                    showStatus(
-                        res.message ||
-                        res.status
-                    );
-                });
-        }
-
-        return r.json()
-            .then(res => {
-
-                if (res.status !== "ok") {
-
-                    errorDiv.textContent =
-                        "Status: " +
-                        res.status;
-                }
-            });
-
-    })
-    .catch(err => {
-
-        console.error(
-            "Send failed:",
-            err
-        );
-
-        showStatus(
-            "Failed to send message."
-        );
-    });
-}
-
-messageInput.onkeydown = function(e) {
-
-    if (e.key === "Enter") {
-        send();
+        sendCommand(message);
+        return;
     }
-};
 
-function deleteMsg(messageID) {
-
-    fetch(
-        `${API_URL}/command`,
-        fetchOptions(
-            "POST",
-            {
-                cmd: `/delete ${messageID}`
-            }
-        )
-    )
-    .then(r => {
-
-        if (!r.ok) {
-
-            showStatus(
-                "Failed to delete message."
-            );
-        }
-
-    })
-    .catch(err => {
-
-        console.error(
-            "Delete failed:",
-            err
-        );
-
-        showStatus(
-            "Failed to delete message."
-        );
-    });
-}
-
-function requestRoomRefresh() {
 
     if (
         !socket ||
         socket.readyState !== WebSocket.OPEN
     ) {
+
+        showStatus(
+            "Not connected."
+        );
+
         return;
     }
 
+
     socket.send(
         JSON.stringify({
-            type: "join",
-            room: room
+            type: "send",
+            room: room,
+            message: message
         })
     );
 }
 
-function switchRoom(newRoom) {
 
-    if (!newRoom) {
-        return;
-    }
+function sendCommand(command) {
 
     if (
         !socket ||
@@ -755,11 +842,75 @@ function switchRoom(newRoom) {
     ) {
 
         showStatus(
-            "Chat connection is not ready."
+            "Not connected."
         );
 
         return;
     }
+
+
+    socket.send(
+        JSON.stringify({
+            type: "command",
+            command: command
+        })
+    );
+}
+
+
+messageInput.onkeydown = function(event) {
+
+    if (event.key === "Enter") {
+        send();
+    }
+};
+
+
+function logout() {
+
+    intentionalClose = true;
+
+    localStorage.removeItem(
+        "chat_token"
+    );
+
+    localStorage.removeItem(
+        "chat_user"
+    );
+
+
+    if (socket) {
+
+        socket.send(
+            JSON.stringify({
+                type: "logout"
+            })
+        );
+
+        socket.close();
+
+        socket = null;
+    }
+
+
+    location.reload();
+}
+
+
+function switchRoom(newRoom) {
+
+    if (
+        !socket ||
+        socket.readyState !== WebSocket.OPEN
+    ) {
+
+        showStatus(
+            "Not connected."
+        );
+
+        return;
+    }
+
 
     socket.send(
         JSON.stringify({
@@ -769,6 +920,7 @@ function switchRoom(newRoom) {
     );
 }
 
+
 function joinRoom() {
 
     const code =
@@ -777,47 +929,316 @@ function joinRoom() {
             .value
             .trim();
 
+
     if (code) {
         switchRoom(code);
     }
 }
 
+
 function newRoom() {
 
-    fetch(
-        `${API_URL}/room/new`,
-        fetchOptions("GET")
-    )
-    .then(r => r.text())
-    .then(roomCode => {
-        switchRoom(roomCode);
-    })
-    .catch(err => {
-
-        console.error(
-            "Could not create room:",
-            err
-        );
+    if (
+        !socket ||
+        socket.readyState !== WebSocket.OPEN
+    ) {
 
         showStatus(
-            "Failed to create room."
+            "Not connected."
+        );
+
+        return;
+    }
+
+
+    socket.send(
+        JSON.stringify({
+            type: "new_room"
+        })
+    );
+}
+
+
+function deleteMsg(id) {
+
+    sendCommand(
+        `/delete ${id}`
+    );
+}
+
+
+function renderUsers(users) {
+
+    userList.innerHTML = "";
+
+
+    users.forEach(user => {
+
+        const div =
+            document.createElement("div");
+
+        div.className =
+            "user";
+
+        div.textContent =
+            user;
+
+        userList.appendChild(
+            div
         );
     });
 }
 
+
+function renderMessages(messages) {
+
+    chatBox.innerHTML = "";
+
+
+    messages.forEach(message => {
+
+        appendMessage(
+            message
+        );
+    });
+
+
+    roomLabel.textContent =
+        room === "public"
+            ? ""
+            : "Room " + room;
+
+
+    chatBox.scrollTop =
+        chatBox.scrollHeight;
+}
+
+
+function appendMessage(message) {
+
+    if (
+        !message ||
+        !message.text
+    ) {
+        return;
+    }
+
+
+    const parts =
+        message.text.split("|");
+
+
+    if (parts.length < 2) {
+        return;
+    }
+
+
+    const timestamp =
+        parts[0];
+
+    const rest =
+        parts[1];
+
+
+    const colon =
+        rest.indexOf(":");
+
+
+    if (colon === -1) {
+        return;
+    }
+
+
+    const username =
+        rest.substring(
+            0,
+            colon
+        );
+
+
+    const text =
+        rest.substring(
+            colon + 1
+        ).trim();
+
+
+    const div =
+        document.createElement("div");
+
+    div.className =
+        "message";
+
+
+    const timestampSpan =
+        document.createElement("span");
+
+    timestampSpan.className =
+        "timestamp";
+
+    timestampSpan.textContent =
+        timestamp;
+
+
+    const usernameSpan =
+        document.createElement("span");
+
+    usernameSpan.className =
+        "username";
+
+    usernameSpan.textContent =
+        username + ":";
+
+
+    div.appendChild(
+        timestampSpan
+    );
+
+    div.appendChild(
+        document.createTextNode(" ")
+    );
+
+    div.appendChild(
+        usernameSpan
+    );
+
+    div.appendChild(
+        document.createTextNode(
+            " " + text
+        )
+    );
+
+
+    if (isAdmin) {
+
+        if (
+            showIDsCheckbox.checked
+        ) {
+
+            const id =
+                document.createElement("span");
+
+            id.className =
+                "msgid";
+
+            id.textContent =
+                `[ID: ${message.id}]`;
+
+            div.appendChild(
+                id
+            );
+        }
+
+
+        if (
+            showDeleteCheckbox.checked
+        ) {
+
+            const button =
+                document.createElement("button");
+
+            button.className =
+                "deleteBtn";
+
+            button.textContent =
+                "X";
+
+            button.onclick =
+                () => deleteMsg(
+                    message.id
+                );
+
+            div.appendChild(
+                button
+            );
+        }
+    }
+
+
+    chatBox.appendChild(
+        div
+    );
+}
+
+
+function renderMessagesFromDOM() {
+
+    const messages = [];
+
+    const elements =
+        chatBox.querySelectorAll(
+            ".message"
+        );
+
+    elements.forEach(element => {
+
+        messages.push(
+            element
+        );
+    });
+
+
+    if (messages.length === 0) {
+        return;
+    }
+}
+
+
+function startPing() {
+
+    stopPing();
+
+
+    pingTimer =
+        setInterval(() => {
+
+            if (
+                socket &&
+                socket.readyState === WebSocket.OPEN
+            ) {
+
+                socket.send(
+                    JSON.stringify({
+                        type: "ping"
+                    })
+                );
+            }
+
+        }, 10000);
+}
+
+
+function stopPing() {
+
+    if (pingTimer) {
+
+        clearInterval(
+            pingTimer
+        );
+
+        pingTimer = null;
+    }
+}
+
+
 showIDsCheckbox.addEventListener(
     "change",
     () => {
-        requestRoomRefresh();
+
+        switchRoom(room);
     }
 );
+
 
 showDeleteCheckbox.addEventListener(
     "change",
     () => {
-        requestRoomRefresh();
+
+        switchRoom(room);
     }
 );
+
+
+connect();
 
 </script>
 
