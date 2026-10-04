@@ -564,10 +564,20 @@ let connecting=false;
 let unreadMessages=0;
 
 function setFaviconNotification(enabled){
-    $("favicon").href=
-        enabled
-        ?"favicon-notification.png"
-        :"favicon.png";
+
+    const favicon=$("favicon");
+
+    if(enabled){
+
+        favicon.href=
+            "favicon-notification.png?v="+Date.now();
+
+    }else{
+
+        favicon.href=
+            "favicon.png?v="+Date.now();
+
+    }
 }
 
 function clearMessageNotification(){
