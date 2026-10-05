@@ -1171,14 +1171,6 @@ function handleConnected(data){
 
 function logout(){
 
-    manuallyClosed=true;
-
-    clearTimeout(
-        reconnectTimer
-    );
-
-    stopPing();
-
     if(
         socket&&
         socket.readyState===WebSocket.OPEN
@@ -1187,17 +1179,6 @@ function logout(){
         sendWS({
             type:"logout"
         });
-
-        setTimeout(
-            ()=>{
-                if(socket){
-                    socket.close();
-                }
-
-                cleanupLocalLogin();
-            },
-            100
-        );
 
     }else{
 
