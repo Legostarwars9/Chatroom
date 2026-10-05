@@ -1337,7 +1337,7 @@ function renderMessages(messages){
 }
 
 function addMessage(data){
-    
+
     if(!data)return;
 
     let message=
@@ -1367,8 +1367,104 @@ function addMessage(data){
 
     div.className="message";
 
-    div.textContent=
-        message;
+    /*
+     * Turn URLs into clickable links while
+     * keeping all other text as plain text.
+     */
+
+    const urlRegex=
+        /https?:\/\/[^\s<]+/g;
+
+    let lastIndex=0;
+    let match;
+
+    while((match=urlRegex.exec(message))!==null){
+
+        /*
+         * Add the text before the URL.
+         */
+
+        if(match.index>lastIndex){
+
+            div.appendChild(
+                document.createTextNode(
+                    message.slice(
+                        lastIndex,
+                        match.index
+                    )
+                )
+            );
+        }
+
+        let url=match[0];
+
+        /*
+         * Don't include common punctuation at
+         * the end of a sentence in the link.
+         */
+
+        let trailing="";
+
+        while(
+            /[.,!?;:)\]}]$/.test(url)
+        ){
+
+            trailing=
+                url.slice(-1)+
+                trailing;
+
+            url=
+                url.slice(0,-1);
+        }
+
+        /*
+         * Create the clickable link.
+         */
+
+        const link=
+            document.createElement(
+                "a"
+            );
+
+        link.href=url;
+        link.textContent=url;
+        link.target="_blank";
+        link.rel="noopener noreferrer";
+
+        div.appendChild(link);
+
+        /*
+         * Put punctuation back outside
+         * the clickable link.
+         */
+
+        if(trailing){
+
+            div.appendChild(
+                document.createTextNode(
+                    trailing
+                )
+            );
+        }
+
+        lastIndex=
+            match.index+
+            match[0].length;
+    }
+
+    /*
+     * Add whatever text remains after the
+     * final URL.
+     */
+
+    if(lastIndex<message.length){
+
+        div.appendChild(
+            document.createTextNode(
+                message.slice(lastIndex)
+            )
+        );
+    }
 
     if(
         $("showIDsCheckbox").checked&&
@@ -1420,12 +1516,13 @@ function addMessage(data){
 
     $("messages").scrollTop=
         $("messages").scrollHeight;
+
     if(document.hidden){
 
-    unreadMessages++;
+        unreadMessages++;
 
-    setFaviconNotification(true);
-}
+        setFaviconNotification(true);
+    }
 }
 
 function deleteMsg(id){
