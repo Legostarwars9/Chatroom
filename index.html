@@ -1372,8 +1372,8 @@ function addMessage(data){
      * keeping all other text as plain text.
      */
 
-    const urlRegex=
-        /https?:\/\/[^\s<]+/g;
+    const urlRegex =
+    /(?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+(?:\/[^\s<]*)?/g;
 
     let lastIndex=0;
     let match;
@@ -1421,18 +1421,22 @@ function addMessage(data){
          * Create the clickable link.
          */
 
-        const link=
-            document.createElement(
-                "a"
-            );
+        let displayUrl = match[0];
 
-        link.href=url;
-        link.textContent=url;
-        link.target="_blank";
-        link.rel="noopener noreferrer";
+        let href = displayUrl;
+
+        if (!/^https?:\/\//i.test(href)) {
+            href = "https://" + href;
+        }
+
+        const link = document.createElement("a");
+
+        link.href = href;
+        link.textContent = displayUrl;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
 
         div.appendChild(link);
-
         /*
          * Put punctuation back outside
          * the clickable link.
