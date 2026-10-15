@@ -2,6 +2,11 @@ from flask import Flask, request, send_from_directory
 from flask_sock import Sock
 from simple_websocket.errors import ConnectionClosed
 import bcrypt, os, time, threading, uuid, csv, logging, re, json
+import sqlite3
+import urllib.request
+import urllib.parse
+import urllib.error
+from collections import deque
 
 app = Flask(__name__)
 sock = Sock(app)
@@ -15,6 +20,180 @@ BANNED_WORDS = os.path.join(BASE, "banned_words.csv")
 
 os.makedirs(MSG_DIR, exist_ok=True)
 os.makedirs(ROOM_DIR, exist_ok=True)
+
+# =========================
+# GIPHY SERVER INTEGRATION
+# =========================
+
+GIPHY_API_KEY = os.environ.get("GIPHY_API_KEY", "")
+GIPHY_DB = os.path.join(BASE, "giphy_usage.db")
+
+GIPHY_HOURLY_BUDGET = 90
+GIPHY_CACHE_SECONDS = 600
+GIPHY_USER_WINDOW = 60
+GIPHY_USER_LIMIT = 15
+
+giphy_lock = threading.RLock()
+giphy_cache = {}
+giphy_user_requests = {}
+
+def giphy_database():
+    db = sqlite3.connect(GIPHY_DB, timeout=10)
+    db.execute("""
+        CREATE TABLE IF NOT EXISTS requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp REAL NOT NULL,
+            kind TEXT NOT NULL,
+            success INTEGER NOT NULL
+        )
+    """)
+    db.commit()
+    return db
+
+def giphy_stats():
+    now = time.time()
+    with giphy_lock:
+        with giphy_database() as db:
+            hour = db.execute(
+                "SELECT COUNT(*) FROM requests WHERE timestamp > ?",
+                (now - 3600,)
+            ).fetchone()[0]
+
+            today = db.execute(
+                "SELECT COUNT(*) FROM requests WHERE timestamp > ?",
+                (now - 86400,)
+            ).fetchone()[0]
+
+            total = db.execute(
+                "SELECT COUNT(*) FROM requests"
+            ).fetchone()[0]
+
+            kinds = dict(db.execute("""
+                SELECT kind, COUNT(*)
+                FROM requests GROUP BY kind
+            """).fetchall())
+
+        return {
+            "hour": hour,
+            "today": today,
+            "total": total,
+            "budget": GIPHY_HOURLY_BUDGET,
+            "remaining": max(0, GIPHY_HOURLY_BUDGET - hour),
+            "searches": kinds.get("gifs_search", 0),
+            "stickers": kinds.get("stickers_search", 0),
+            "trending": (
+                kinds.get("gifs_trending", 0) +
+                kinds.get("stickers_trending", 0)
+            ),
+            "cached_entries": len(giphy_cache)
+        }
+
+def giphy_fetch(username, media_type, query):
+    if not GIPHY_API_KEY:
+        return {"error": "GIPHY API key is not configured"}
+
+    if media_type not in ("gifs", "stickers"):
+        return {"error": "Invalid media type"}
+
+    if not isinstance(query, str):
+        return {"error": "Invalid search"}
+
+    query = query.strip()[:100]
+    endpoint = "search" if query else "trending"
+    cache_key = (media_type, query.lower())
+    now = time.time()
+
+    with giphy_lock:
+        cached = giphy_cache.get(cache_key)
+        if cached and now - cached[0] < GIPHY_CACHE_SECONDS:
+            return {"data": cached[1], "cached": True}
+
+        # Limit each user's uncached requests.
+        times = giphy_user_requests.get(username, [])
+        times = [t for t in times if now - t < GIPHY_USER_WINDOW]
+
+        if len(times) >= GIPHY_USER_LIMIT:
+            giphy_user_requests[username] = times
+            return {"error": "Too many GIPHY searches. Try again shortly."}
+
+        giphy_user_requests[username] = times + [now]
+
+        if giphy_stats()["hour"] >= GIPHY_HOURLY_BUDGET:
+            return {"error": "GIPHY hourly request budget reached"}
+
+        params = {
+            "api_key": GIPHY_API_KEY,
+            "limit": 24,
+            "rating": "g"
+        }
+        if query:
+            params["q"] = query
+
+        url = (
+            f"https://api.giphy.com/v1/{media_type}/{endpoint}?"
+            + urllib.parse.urlencode(params)
+        )
+
+        kind = f"{media_type}_{endpoint}"
+        success = False
+        results = []
+
+        try:
+            req = urllib.request.Request(
+                url,
+                headers={"User-Agent": "Chatroom-GIPHY/1.0"}
+            )
+
+            with urllib.request.urlopen(req, timeout=8) as response:
+                payload = json.load(response)
+
+            for item in payload.get("data", []):
+                images = item.get("images", {})
+                preview = (
+                    images.get("fixed_width_small", {}).get("url")
+                    or images.get("fixed_width", {}).get("url")
+                )
+                original = images.get("original", {}).get("url")
+                page = item.get("url", "")
+
+                if not (preview and original and page):
+                    continue
+
+                results.append({
+                    "url": page,
+                    "title": item.get("title", ""),
+                    "images": {
+                        "fixed_width_small": {"url": preview},
+                        "original": {"url": original}
+                    }
+                })
+
+            success = True
+
+        except (urllib.error.URLError, TimeoutError, ValueError) as exc:
+            logging.warning("GIPHY request failed: %s", exc)
+
+        finally:
+            # Record every outbound request attempt.
+            with giphy_database() as db:
+                db.execute(
+                    """INSERT INTO requests
+                       (timestamp, kind, success)
+                       VALUES (?, ?, ?)""",
+                    (time.time(), kind, int(success))
+                )
+
+        if not success:
+            return {"error": "GIPHY request failed"}
+
+        giphy_cache[cache_key] = (time.time(), results)
+
+        # Remove expired cache entries.
+        for key, (created, _) in list(giphy_cache.items()):
+            if time.time() - created >= GIPHY_CACHE_SECONDS:
+                del giphy_cache[key]
+
+        return {"data": results, "cached": False}
 
 RATE_LIMIT = 5
 RATE_WINDOW = 5
@@ -397,6 +576,33 @@ def websocket(ws):
                 online_users[username] = time.time()
                 send_ws(ws, {"type": "pong"})
                 continue
+            
+            if msg_type == "giphy_request":
+                result = giphy_fetch(
+                    username,
+                    data.get("media_type", "gifs"),
+                    data.get("query", "")
+                )
+                send_ws(ws, {
+                    "type": "giphy_results",
+                    "request_id": data.get("request_id"),
+                    **result
+                })
+                continue
+
+            if msg_type == "giphy_stats":
+                if load_users().get(username, {}).get("role") != "admin":
+                    send_ws(ws, {
+                        "type": "giphy_stats",
+                        "error": "Admin only"
+                    })
+                else:
+                    send_ws(ws, {
+                        "type": "giphy_stats",
+                        **giphy_stats()
+                    })
+                continue
+
 
             if msg_type == "logout":
                 send_ws(ws, {"type": "logout", "status": "ok"})
