@@ -700,8 +700,6 @@ body.old-layout #giphyPanel {
    GIPHY INTEGRATION
    ========================= */
 
-const GIPHY_API_KEY = "xYGIKpsWTlZKhIwh2W7oVcbHojvproHu";
-
 let giphyType = "gifs";
 let selectedGiphy = null;
 let giphySearchTimer = null;
@@ -729,73 +727,64 @@ function searchGiphyDebounced() {
 
     giphySearchTimer = setTimeout(() => {
         loadGiphy();
-    }, 2500);
+    }, 2000);
 }
 
-async function loadGiphy() {
+
+let giphyRequestNumber = 0;
+
+function loadGiphy() {
     const query = document.getElementById("giphySearch").value.trim();
     const results = document.getElementById("giphyResults");
 
-    if (giphyRequest) giphyRequest.abort();
-    giphyRequest = new AbortController();
-    const signal = giphyRequest.signal;
+    clearTimeout(giphySearchTimer);
 
     results.textContent = "Loading...";
 
-    const endpoint = query ? "search" : "trending";
+    const requestId = ++giphyRequestNumber;
 
-    const params = new URLSearchParams({
-        api_key: GIPHY_API_KEY,
-        limit: "24",
-        rating: "g"
-    });
-
-    if (query) params.set("q", query);
-
-    const url =
-        `https://api.giphy.com/v1/${giphyType}/${endpoint}?${params}`;
-
-    try {
-        const response = await fetch(url, { signal });
-
-        if (!response.ok) {
-            throw new Error("GIPHY request failed");
-        }
-
-        const json = await response.json();
-
-        results.replaceChildren();
-
-        if (!json.data || !json.data.length) {
-            results.textContent = "No results found.";
-            return;
-        }
-
-        json.data.forEach(gif => {
-            const preview =
-                gif.images.fixed_width_small?.url ||
-                gif.images.fixed_width?.url;
-
-            if (!preview) return;
-
-            const img = document.createElement("img");
-
-            img.src = preview;
-            img.alt = gif.title || "GIF";
-            img.loading = "lazy";
-
-            img.onclick = () => selectGiphy(gif);
-
-            results.appendChild(img);
-        });
-
-    } catch (error) {
-        if (error.name === "AbortError") return;
-
-        results.textContent =
-            "Could not load GIPHY results. Check your API key.";
+    if (!sendWS({
+        type: "giphy_request",
+        media_type: giphyType,
+        query: query,
+        request_id: requestId
+    })) {
+        results.textContent = "Not connected to server.";
     }
 }
+
+function handleGiphyResults(json) {
+    // Ignore results from older searches.
+    if (json.request_id !== giphyRequestNumber) return;
+
+    const results = document.getElementById("giphyResults");
+    results.replaceChildren();
+
+    if (json.error) {
+        results.textContent = json.error;
+        return;
+    }
+
+    if (!json.data || !json.data.length) {
+        results.textContent = "No results found.";
+        return;
+    }
+
+    json.data.forEach(gif => {
+        const preview = gif.images.fixed_width_small?.url;
+        if (!preview) return;
+
+        const img = document.createElement("img");
+        img.src = preview;
+        img.alt = gif.title || "GIF";
+        img.loading = "lazy";
+
+        img.onclick = () => selectGiphy(gif);
+
+        results.appendChild(img);
+    });
+}
+
 
 function selectGiphy(gif) {
     selectedGiphy = {
@@ -1220,6 +1209,14 @@ function handleMessage(event){
     }
 
     switch(data.type){
+        
+        case "giphy_results":
+            handleGiphyResults(data);
+            break;
+
+        case "giphy_stats":
+            handleGiphyStats(data);
+            break;
 
         case "login":
             handleLogin(data);
