@@ -611,6 +611,59 @@ body.old-layout #giphyPanel {
                     >
                     Show delete buttons
                 </label>
+                
+<div id="giphyAdminStats"
+     style="border-top:1px solid #444;
+            margin-top:15px;
+            padding-top:10px;">
+
+    <h3>GIPHY API Usage</h3>
+
+    <p>Last 60 minutes:
+        <strong id="giphyHour">--</strong>
+    </p>
+
+    <p>Estimated remaining:
+        <strong id="giphyRemaining">--</strong>
+    </p>
+
+    <progress id="giphyUsageBar"
+              value="0"
+              max="90"
+              style="width:100%;"></progress>
+
+    <p>Last 24 hours:
+        <strong id="giphyToday">--</strong>
+    </p>
+
+    <p>Total API calls:
+        <strong id="giphyTotal">--</strong>
+    </p>
+
+    <p>GIF searches:
+        <strong id="giphySearchCount">--</strong>
+    </p>
+
+    <p>Sticker searches:
+        <strong id="giphyStickerCount">--</strong>
+    </p>
+
+    <p>Trending requests:
+        <strong id="giphyTrendingCount">--</strong>
+    </p>
+
+    <p>Cached searches:
+        <strong id="giphyCacheCount">--</strong>
+    </p>
+
+    <button onclick="refreshGiphyStats()">
+        Refresh GIPHY Stats
+    </button>
+
+    <small>Rolling 60-minute estimate.
+    Not GIPHY's official quota balance.</small>
+</div>
+
             </div>
 
         </div>
@@ -728,6 +781,46 @@ function searchGiphyDebounced() {
     giphySearchTimer = setTimeout(() => {
         loadGiphy();
     }, 2000);
+}
+
+function refreshGiphyStats() {
+    if (!isAdmin) return;
+
+    sendWS({
+        type: "giphy_stats"
+    });
+}
+
+function handleGiphyStats(data) {
+    if (!isAdmin || data.error) return;
+
+    document.getElementById("giphyHour").textContent =
+        `${data.hour} / ${data.budget}`;
+
+    document.getElementById("giphyRemaining").textContent =
+        data.remaining;
+
+    const bar = document.getElementById("giphyUsageBar");
+    bar.max = data.budget;
+    bar.value = Math.min(data.hour, data.budget);
+
+    document.getElementById("giphyToday").textContent =
+        data.today;
+
+    document.getElementById("giphyTotal").textContent =
+        data.total;
+
+    document.getElementById("giphySearchCount").textContent =
+        data.searches;
+
+    document.getElementById("giphyStickerCount").textContent =
+        data.stickers;
+
+    document.getElementById("giphyTrendingCount").textContent =
+        data.trending;
+
+    document.getElementById("giphyCacheCount").textContent =
+        data.cached_entries;
 }
 
 
@@ -954,6 +1047,8 @@ function showChat(){
 
     $("adminControls").style.display=
         isAdmin?"block":"none";
+    if (isAdmin) {
+    refreshGiphyStats();}
 }
 
 function updateLayoutButton(){
