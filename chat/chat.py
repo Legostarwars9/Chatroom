@@ -401,7 +401,9 @@ def websocket(ws):
             if msg_type == "logout":
                 send_ws(ws, {"type": "logout", "status": "ok"})
                 remove_token(username, token)
-                break
+                username = None
+                token = None
+                continue
 
             if msg_type == "send":
                 message = data.get("message", "").strip()
